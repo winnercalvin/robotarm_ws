@@ -9,9 +9,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(action_msgs REQUIRED)
-rosidl_generate_interfaces(${PROJECT_NAME}
-  "action/RobotTask.action"
-)
+
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
@@ -28,4 +26,8 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-ament_package()
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "action/RobotTask.action"
+  DEPENDENCIES action_msgs
+)
+
