@@ -1,0 +1,9 @@
+# Goal
+string task_name
+float32 value
+---
+# Result
+bool success
+---
+# Feedback
+float32 progress
