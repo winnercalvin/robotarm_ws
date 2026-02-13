@@ -51,7 +51,7 @@ def perform_task():
     from DSR_ROBOT2 import (
         set_digital_output,
         get_digital_input,
-        movej,wait
+        movej,movel,wait
     )
 
     # 디지털 입력 신호 대기 함수
@@ -80,13 +80,27 @@ def perform_task():
     JReady = [0, 0, 90, 0, 90, 0]
     print("Moving to ready position...")
     movej(JReady, vel=VELOCITY, acc=ACC)
+    wait(2)
 
-    # Grip 및 Release 반복
-    while rclpy.ok():
-        grip()
-        wait(0.5)
+    MoveToScooper = [45, 45, 45, 0, 45, 0]
+    print("Move to scooper...")
+    movel(MoveToScooper, vel=VELOCITY, acc=ACC)
+    wait(3)
+
+    if get_digital_input(1) == 1: 
+        print("Rlease 먼저 동작합니다.")
         release()
         wait(0.5)
+    
+    grip()
+    wait(0.5)
+
+    # # Grip 및 Release 반복
+    # while rclpy.ok():
+    #     grip()
+    #     wait(0.5)
+    #     release()
+    #     wait(0.5)
 
 def main(args=None):
     """메인 함수: ROS2 노드 초기화 및 동작 수행"""

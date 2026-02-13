@@ -1,35 +1,77 @@
 import rclpy
 import DR_init
-import sys
+import time
+
+# 로봇 설정 상수
+ROBOT_ID = "dsr01"
+ROBOT_MODEL = "m0609"
+ROBOT_TOOL = "Tool Weight"
+ROBOT_TCP = "GripperDA_v1"
+
+# 이동 속도 및 가속도
+VELOCITY = 60
+ACC = 60
+
+# 디지털 출력 상태
+ON, OFF = 1, 0
+
+# DR_init 설정
+DR_init.__dsr__id = ROBOT_ID
+DR_init.__dsr__model = ROBOT_MODEL
+
+def initialize_robot():
+    """로봇의 Tool과 TCP를 설정"""
+    from DSR_ROBOT2 import set_tool, set_tcp,get_tool,get_tcp,ROBOT_MODE_MANUAL,ROBOT_MODE_AUTONOMOUS  # 필요한 기능만 임포트
+    from DSR_ROBOT2 import get_robot_mode,set_robot_mode
+
+    # Tool과 TCP 설정시 매뉴얼 모드로 변경해서 진행
+    set_robot_mode(ROBOT_MODE_MANUAL)
+    set_tool(ROBOT_TOOL)
+    set_tcp(ROBOT_TCP)
+    
+    set_robot_mode(ROBOT_MODE_AUTONOMOUS)
+    time.sleep(2)  # 설정 안정화를 위해 잠시 대기
+    # 설정된 상수 출력
+    print("#" * 50)
+    print("Initializing robot with the following settings:")
+    print(f"ROBOT_ID: {ROBOT_ID}")
+    print(f"ROBOT_MODEL: {ROBOT_MODEL}")
+    print(f"ROBOT_TCP: {get_tcp()}") 
+    print(f"ROBOT_TOOL: {get_tool()}")
+    print(f"ROBOT_MODE 0:수동, 1:자동 : {get_robot_mode()}")
+    print(f"VELOCITY: {VELOCITY}")
+    print(f"ACC: {ACC}")
+    print("#" * 50)
+
+
+
+def perform_task():
+    """로봇이 수행할 작업"""
+    from DSR_ROBOT2 import (
+        movej,wait
+    )
+    # 초기 위치로 이동
+    JReady = [0, 0, 90, 0, 90, 0]
+    print("Moving to ready position...")
+    movej(JReady, vel=VELOCITY, acc=ACC)
+    wait(2)
+
 
 def main(args=None):
-    
-    #모든 작업을 시작하기 전에 로봇의 ID와 모델명을 지정
-    ROBOT_ID = "dsr01"
-    ROBOT_MODEL = "m0609"
-    DR_init.__dsr__id = ROBOT_ID
-    DR_init.__dsr__model = ROBOT_MODEL
-		
-		#ROS 2와 네트워크를 통해 통신할 수 있게 설정 
+    """메인 함수: ROS2 노드 초기화 및 동작 수행"""
     rclpy.init(args=args)
-    node = rclpy.create_node('example_py', namespace=ROBOT_ID)
+    node = rclpy.create_node("grip_simple", namespace=ROBOT_ID)
+
+    # DR_init에 노드 설정
     DR_init.__dsr__node = node
 
+    # 초기화는 한 번만 수행
+    initialize_robot()
 
-		#로봇 제어를 위한 핵심 기능 구현
-		#DSR_ROBOT2가져오기는 ROS 2 노드( DR_init.__dsr__node)를 초기화한 후 사용해야 함.
-    from DSR_ROBOT2 import movej, posj, set_robot_mode, ROBOT_MODE_AUTONOMOUS
-
-		#로봇의 작동 모드 및 속도 설정
-    set_robot_mode(ROBOT_MODE_AUTONOMOUS)
-
-		#위치 정의
-    target_pos = posj(0, 0, 90.0, 0, 90.0, 0)
-
-    movej(target_pos, vel=100, acc=100)
-
-    print("Example complete")
+    perform_task()
+    
     rclpy.shutdown()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
