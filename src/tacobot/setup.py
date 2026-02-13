@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'scooper_grab = tacobot.scooper_grab:main',
+            'home = tacobot.home:main',
         ],
     },
 )
