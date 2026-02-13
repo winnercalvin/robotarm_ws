@@ -1,9 +1,10 @@
 # Goal
-string task_name
-float32 value
+float64[] target_joints    # 목표 관절 각도 (6개)
+int32 task_type            # 0:이동만, 1:집기(Grip), 2:놓기(Release)
 ---
 # Result
-bool success
+bool success               # 성공 여부 (True/False)
+string message             # "작업 완료" 같은 결과 메시지
 ---
 # Feedback
-float32 progress
+string status              # "이동 중...", "집는 중..." 같은 상태 메시지
