@@ -51,7 +51,8 @@ def perform_task():
     from DSR_ROBOT2 import (
         set_digital_output,
         get_digital_input,
-        movej,movel,wait
+        movej,movel,wait,
+        get_current_posj
     )
 
     # 디지털 입력 신호 대기 함수
@@ -76,21 +77,26 @@ def perform_task():
         set_digital_output(2, OFF)
         wait_digital_input(1)
 
-    # 초기 위치로 이동
+    # current_joints = get_current_posj() # [J1, J2, J3, J4, J5, J6] 리스트 반환
+    # print(f"현재 관절 각도: {current_joints}")
+
+    # 초기 위치로 이동  
     JReady = [0, 0, 90, 0, 90, 0]
     print("Moving to ready position...")
     movej(JReady, vel=VELOCITY, acc=ACC)
     wait(2)
 
-    MoveToScooper = [45, 45, 45, 0, 45, 0]
-    print("Move to scooper...")
-    movel(MoveToScooper, vel=VELOCITY, acc=ACC)
-    wait(3)
-
     if get_digital_input(1) == 1: 
         print("Rlease 먼저 동작합니다.")
         release()
         wait(0.5)
+
+    MoveToScooper = [-21.679, 31.319, 73.279, 4.451, 61.702, -0.439]
+    print("Move to scooper...")
+    movej(MoveToScooper, vel=VELOCITY, acc=ACC)
+    wait(2)
+
+    
     
     grip()
     wait(0.5)
