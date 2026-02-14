@@ -29,6 +29,7 @@ setup(
         'console_scripts': [
             'home = tacobot.home:main',
             'scooper_grab = tacobot.scooper_grab:main',
+            'scooper_pour = tacobot.pouring:main',
             'main_controller = tacobot.main_controller:main',
         ],
     },
