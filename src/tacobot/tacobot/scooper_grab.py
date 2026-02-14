@@ -51,9 +51,12 @@ def perform_task():
     from DSR_ROBOT2 import (
         set_digital_output,
         get_digital_input,
-        movej,movel,wait,
-        get_current_posj
+        movej,wait,
     )
+    from rclpy.callback_groups import ReentrantCallbackGroup
+    from rclpy.executors import MultiThreadedExecutor
+    from rclpy.action import ActionServer
+    from tacobot_interfaces.action import RobotTask
 
     # 디지털 입력 신호 대기 함수
     def wait_digital_input(sig_num):
@@ -80,33 +83,88 @@ def perform_task():
     # current_joints = get_current_posj() # [J1, J2, J3, J4, J5, J6] 리스트 반환
     # print(f"현재 관절 각도: {current_joints}")
 
-    # 초기 위치로 이동  
-    JReady = [0, 0, 90, 0, 90, 0]
-    print("Moving to ready position...")
-    movej(JReady, vel=VELOCITY, acc=ACC)
-    wait(2)
+    # ---------------------------------------------------------
+    # 액션 콜백 (여기가 핵심!)
+    # ---------------------------------------------------------
+    def execute_callback(goal_handle):
+        try:
+            print("\n[Action Server] 명령 수신! 작업 시작...")
+            
+            target_joints = list(goal_handle.request.target_joints)
+            task_type = goal_handle.request.task_type
+            
+            feedback_msg = RobotTask.Feedback()
+            
+            # [Step 1] 이동
+            feedback_msg.status = "목표 위치로 이동 중..."
+            goal_handle.publish_feedback(feedback_msg)
+            
+            print(f"이동 목표: {target_joints}")
+            movej(target_joints, vel=VELOCITY, acc=ACC)
+            wait(0.5)
 
-    if get_digital_input(1) == 1: 
-        print("Rlease 먼저 동작합니다.")
-        release()
-        wait(0.5)
+            # [Step 2] 동작 수행
+            if task_type == 1:
+                feedback_msg.status = "집는 중 (Grip)..."
+                goal_handle.publish_feedback(feedback_msg)
+                
+                if get_digital_input(1) == 1:
+                    print("! 이미 잡고 있어 먼저 놓습니다.")
+                    release()
+                    wait(0.5)
+                grip()
+                
+            elif task_type == 2:
+                feedback_msg.status = "놓는 중 (Release)..."
+                goal_handle.publish_feedback(feedback_msg)
+                release()
+            
+            else:
+                feedback_msg.status = "이동 완료"
+                goal_handle.publish_feedback(feedback_msg)
 
-    MoveToScooper = [-21.679, 31.319, 73.279, 4.451, 61.702, -0.439]
-    print("Move to scooper...")
-    movej(MoveToScooper, vel=VELOCITY, acc=ACC)
-    wait(2)
+            # 성공 처리
+            goal_handle.succeed()
+            result = RobotTask.Result()
+            result.success = True
+            result.message = "Success"
+            print("[Action Server] 작업 완료!")
+            return result
 
+        except Exception as e:
+            # 에러 발생 시 프로그램이 죽지 않고 로그를 띄우도록 함
+            print(f"!!!! 에러 발생 !!!! : {e}")
+            goal_handle.abort()
+            result = RobotTask.Result()
+            result.success = False
+            result.message = f"Error: {e}"
+            return result
+
+    # ---------------------------------------------------------
+    # 서버 실행 (멀티스레드 적용)
+    # ---------------------------------------------------------
+    node = DR_init.__dsr__node
+
+    # [중요] 콜백 그룹 설정: 이 서버가 바빠도 다른 통신(movej)이 끼어들 수 있게 함
+    server = ActionServer(
+        node,
+        RobotTask,
+        '/dsr01/scooper_grab', # 네임스페이스 포함된 이름
+        execute_callback,
+        callback_group=ReentrantCallbackGroup() # <--- 여기가 핵심!
+    )
     
+    print("스쿠퍼 액션 서버 대기 중... (MultiThreaded)")
     
-    grip()
-    wait(0.5)
+    # [중요] 멀티스레드 실행기로 노드를 돌림
+    executor = MultiThreadedExecutor()
+    executor.add_node(node)
+    
+    try:
+        executor.spin()
+    except KeyboardInterrupt:
+        print("종료")
 
-    # # Grip 및 Release 반복
-    # while rclpy.ok():
-    #     grip()
-    #     wait(0.5)
-    #     release()
-    #     wait(0.5)
 
 def main(args=None):
     """메인 함수: ROS2 노드 초기화 및 동작 수행"""
