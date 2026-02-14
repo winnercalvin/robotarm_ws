@@ -9,8 +9,8 @@ ROBOT_TOOL = "Tool Weight"
 ROBOT_TCP = "GripperDA_v1"
 
 # 이동 속도 및 가속도
-VELOCITY = 60
-ACC = 60
+VELOCITY = 50
+ACC = 50
 
 # 디지털 출력 상태
 ON, OFF = 1, 0
