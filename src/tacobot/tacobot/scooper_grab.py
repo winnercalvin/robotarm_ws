@@ -65,20 +65,36 @@ def perform_task():
             # print("Waiting for digital input...")
 
 
-    # Release 동작
+    # [NEW] 3비트 신호를 한 번에 쏘는 함수 (확장성 고려)
+    # 예: set_gripper_signal(ON, OFF, OFF) -> 1, 0, 0
+    def set_gripper_signal(s1, s2, s3):
+        set_digital_output(1, s1)
+        set_digital_output(2, s2)
+        set_digital_output(3, s3)
+        wait(0.1) 
+
+    # [수정됨] Release 동작 (0 1 0)
     def release():
-        print("Releasing...")
-        set_digital_output(2, ON)
-        set_digital_output(1, OFF)
+        print("Releasing (0 1 0)...")
+        # 신호: 1번=OFF, 2번=ON, 3번=OFF
+        set_gripper_signal(OFF, ON, OFF)
+        
+        # 2번 신호(Release 완료)가 들어오는지 확인
         wait_digital_input(2)
 
-    # Grip 동작
+    # [수정됨] Grip 동작 (1 0 0)
     def grip():
-        print("Gripping...")
-        # release()
-        set_digital_output(1, ON)
-        set_digital_output(2, OFF)
+        print("Gripping (1 0 0)...")
+        # 신호: 1번=ON, 2번=OFF, 3번=OFF
+        set_gripper_signal(ON, OFF, OFF)
+        
+        # 1번 신호(Grip 완료)가 들어오는지 확인
         wait_digital_input(1)
+        
+    # (참고) 나중에 추가할 기능 예시
+    # def soft_grip(): # (0 0 1)
+    #     set_gripper_signal(OFF, OFF, ON)
+    #     wait_digital_input(3)
 
     # current_joints = get_current_posj() # [J1, J2, J3, J4, J5, J6] 리스트 반환
     # print(f"현재 관절 각도: {current_joints}")
