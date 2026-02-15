@@ -59,6 +59,7 @@ def goal_callback(goal_request):
 # 2. 안방 (Execute Callback)
 def execute_callback(goal_handle):
     task_type = goal_handle.request.task_type
+    data = list(goal_handle.request.target_joints)
     print(f"🎬 [CCTV-2] 작업 시작! Task {task_type}", flush=True)
     # DSR 라이브러리 임포트
     from DSR_ROBOT2 import (
@@ -69,47 +70,90 @@ def execute_callback(goal_handle):
     )
     import tacobot.grab_tools as grab_tools
     import tacobot.pour_tools as pour_tools
+    import tacobot.scoop_tools as scoop_tools
+
+    def move_and_wait(target, v, a):
+        print(f"   >>> [Move] 이동 명령 전송 (Vel: {v})", flush=True)
+        movej(target, vel=v, acc=a)
+        
+        # 로봇이 실제로 도착할 때까지 파이썬이 감시합니다.
+        # (wait(0)보다 훨씬 확실한 방법)
+        start_t = time.time()
+        while True:
+            current = list(get_current_posj())
+            diff = sum([abs(target[i] - current[i]) for i in range(6)])
+            
+            # 오차가 2.0 미만이면 도착으로 인정
+            if diff < 2.0:
+                print("   >>> [Wait] 도착 확인 완료!", flush=True)
+                break
+            
+            # 15초 넘으면 강제 통과 (무한 대기 방지)
+            if time.time() - start_t > 15.0:
+                print("   >>> [Warn] 시간 초과! 다음 동작 강제 진행.", flush=True)
+                break
+                
+            time.sleep(0.1) # 0.1초 간격으로 확인
 
     try:
-        target_joints = list(goal_handle.request.target_joints)
-        v, a = 50, 50
-        if task_type == 1: v, a = 30, 20
-        elif task_type == 3: v, a = 60, 40
+        goal_handle.publish_feedback(RobotTask.Feedback(status=f"Processing..."))
 
-        # --- 동작 시작 ---
-        
-        # 1. Release (잡기 전)
-        if task_type == 1:
-            print("   >>> [Action] Release", flush=True)
-            grab_tools.release()
-            time.sleep(0.5)
+        # ---------------------------------------------------------
+        # Case A: 일반 이동 및 동작 (Grip / Pour) - 데이터 6개
+        # ---------------------------------------------------------
+        if task_type in [1, 3]: 
+            v, a = 50, 50
+            if task_type == 1: v, a = 30, 20
+            elif task_type == 3: v, a = 60, 40
 
-        # 2. 이동 (movej + time.sleep)
-        goal_handle.publish_feedback(RobotTask.Feedback(status=f"이동 중..."))
-        print(f"   >>> [Move] 이동 명령 전송 (movej)", flush=True)
-        movej(target_joints, vel=v, acc=a)
-        
-        # [매우 중요] 로봇이 움직이는 동안, 파이썬은 그냥 3초 쉽니다.
-        # 드라이버를 건드리지 않기 위해 wait() 대신 time.sleep() 씁니다.
-        print("   >>> [Wait] 3초 이동 대기...", flush=True)
-        time.sleep(3.0)
-        print("   >>> [Wait] 이동 완료 간주.", flush=True)
+            # 1. Grip일 경우 Release 먼저 수행
+            if task_type == 1:
+                print("   >>> [Module] Release 실행", flush=True)
+                grab_tools.release()
+                time.sleep(0.5)
 
-        # 3. 도착 후 동작
-        if task_type == 1:   
-            print("   >>> [Action] Grip", flush=True)
-            grab_tools.grip() 
-        elif task_type == 2: 
-            grab_tools.release()
-        elif task_type == 3: 
-            print("   >>> [Action] Pour", flush=True)
-            pour_tools.pour_action()
+            # 2. 이동 (movej)
+            print(f"   >>> [Move] 이동 명령 전송 (movej)", flush=True)
+            movej(data, vel=v, acc=a)
+            
+            # [안전장치] 3초 대기
+            print("   >>> [Wait] 로봇 이동 완료 대기...", flush=True)
+            move_and_wait(data, v, a)
+            print("   >>> [Wait] 이동 완료 확인됨!", flush=True)
 
-        print("🎉 [CCTV-3] 작업 성공! (Succeed)", flush=True)
+            # 3. 동작 수행
+            if task_type == 1:   
+                print("   >>> [Module] Grip 실행", flush=True)
+                grab_tools.grip() 
+            elif task_type == 3: 
+                print("   >>> [Module] Pour 실행", flush=True)
+                pour_tools.pour_action()
+
+        # ---------------------------------------------------------
+        # Case B: 스쿱 동작 (Scoop) - 데이터 24개 (P0~P3)
+        # ---------------------------------------------------------
+        elif task_type == 5:
+            if len(data) == 24:
+                print("   >>> [Data] 스쿱 좌표 데이터(24개) 수신 완료", flush=True)
+                # 데이터 쪼개기 (6개씩)
+                p0 = data[0:6]
+                p1 = data[6:12]
+                p2 = data[12:18]
+                p3 = data[18:24]
+                
+                # 스쿱 모듈 실행 (이동 로직이 내부에 있음)
+                scoop_tools.scoop_action(p0, p1, p2, p3)
+            else:
+                print(f"⚠️ [Error] 데이터 개수 오류! (Expected: 24, Got: {len(data)})", flush=True)
+                goal_handle.abort()
+                return RobotTask.Result(success=False, message="Data Length Error")
+
+        # ---------------------------------------------------------
+        # 성공 처리
+        # ---------------------------------------------------------
+        print("🎉 [Success] 작업 완료 신호 전송", flush=True)
         goal_handle.succeed()
-        
-        # 다음 명령 수신을 위한 통신 안정화 시간
-        time.sleep(0.5) 
+        time.sleep(0.5) # 통신 정리
 
         return RobotTask.Result(success=True, message="Success")
 
