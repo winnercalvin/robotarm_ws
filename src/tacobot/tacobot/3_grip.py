@@ -58,7 +58,7 @@ def source_grip():
     def wait_digital_input(sig_num):
         while not get_digital_input(sig_num):
             wait(0.5)
-            # print("Waiting for digital input...")
+    
 
 
     # Release 동작
@@ -71,7 +71,7 @@ def source_grip():
 
     # Grip 동작
     def soft_grip():
-        print("soft...")
+        print("Gripping...")
         set_digital_output(3, ON)
         set_digital_output(2, ON)
         set_digital_output(1, ON)
@@ -80,8 +80,7 @@ def source_grip():
         wait_digital_input(1)
     
 
-    def mid_grip():
-        print("mid...")
+    def grip():
         set_digital_output(3, ON)
         set_digital_output(2, OFF)
         set_digital_output(1, OFF)
@@ -89,7 +88,6 @@ def source_grip():
 
     
     def hard_grip():
-        print("hard..")
         set_digital_output(3, OFF)
         set_digital_output(2, OFF)
         set_digital_output(1, OFF)
@@ -106,19 +104,12 @@ def source_grip():
     #소스통로 이동
     P1 = posx(328.19, -675.72, 300.95, 89.01, -97.47, 87.71)
     movel(P1,v=100, a=90)
+    grip()
+    wait(2)
     soft_grip()
     wait(2)
-    mid_grip()
-    wait(2)
     hard_grip()
-    wait(2)
 
-
-    # P2 = posx(614.91, 4.83, 250.39, 142.22, 179.66, -127.44)
-    # movel(P2,v=100, a=90)
-    # soft_grip()
-    # wait(2)
-    # hard_grip()
 
 
 
@@ -126,12 +117,7 @@ def source_grip():
     release()
     wait(0.5)
 
-    # # Grip 및 Release 반복
-    # while rclpy.ok():
-    #     grip()
-    #     wait(0.5)
-    #     release()
-    #     wait(0.5)
+
 
 def main(args=None):
     """메인 함수: ROS2 노드 초기화 및 동작 수행"""
