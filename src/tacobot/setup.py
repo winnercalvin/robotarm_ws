@@ -27,9 +27,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'home = tacobot.home:main',
-            'scooper_grab = tacobot.scooper_grab:main',
-            'scooper_pour = tacobot.pouring:main',
+            # 'home = tacobot.home:main',
+            'action_server = tacobot.action_server:main', 
             'main_controller = tacobot.main_controller:main',
         ],
     },
