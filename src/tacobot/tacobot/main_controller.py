@@ -92,17 +92,35 @@ def main(args=None):
     # 3. 튀김기 가서 붓기 (Task 3)
     # ============================================================
     print("\n▶ Step 3: 튀김기로 이동 및 붓기")
-    pos_fryer = [0.0, 0.0, 90.0, 0.0, 0.0, 0.0] 
-    future = controller.send_task(pos_fryer, task_type=3) # 3번이 붓기!
+    
+    # [좌표 확인] 붓기 작업을 할 위치 (튀김기 앞)
+    pos_fryer = [0.0, 0.0, 0.0, 0.0, 90.0, 0.0] 
+    
+    future = controller.send_task(pos_fryer, task_type=3)
     rclpy.spin_until_future_complete(controller, future)
 
     goal_handle = future.result()
     if goal_handle.accepted:
         res_future = goal_handle.get_result_async()
         rclpy.spin_until_future_complete(controller, res_future)
-        print("✅ 붓기 완료!\n")
+        print("✅ 붓기 완료!")
 
-    print("🏁 종료")
+    print("⏳ [System] 3초 대기...")
+    time.sleep(3.0)
+
+    # ------------------------------------------------------------
+    # 4. 기름 털기 (Task 4)
+    # ------------------------------------------------------------
+    print("\n▶ Step 4: 기름 털기 (이동 -> 잡기 -> Shake)")
+    
+    # 서버는 해당 위치로 이동한 후 -> Grip을 수행하고 -> Shake를 합니다.
+    pos_shake = [-13.679, 21.319, 73.279, 4.451, 61.702, -0.439]
+    
+    future = controller.send_task(pos_shake, task_type=4)
+    rclpy.spin_until_future_complete(controller, future)
+    print("✅ 털기 완료!")
+
+    print("\n🏁 모든 시나리오 종료")
     controller.destroy_node()
     rclpy.shutdown()
 

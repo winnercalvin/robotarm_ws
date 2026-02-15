@@ -21,34 +21,39 @@ DR_init.__dsr__model = ROBOT_MODEL
 def initialize_robot():
     """로봇 연결 및 초기 설정"""
     node = DR_init.__dsr__node
-    service_name = f"/{ROBOT_ID}/system/set_robot_mode"
     from DSR_ROBOT2 import (
-        movej, wait, set_tool, set_tcp, get_tool, get_tcp, 
-        get_robot_mode, set_robot_mode, 
+        set_tool, set_tcp, get_tool, get_tcp, 
+        get_robot_mode, set_robot_mode, wait,
         ROBOT_MODE_MANUAL, ROBOT_MODE_AUTONOMOUS
     )
-   
-    time.sleep(5)
+    
+    service_name = f"/{ROBOT_ID}/system/set_robot_mode"
+    time.sleep(5.0)
     
     try:
-        # 매뉴얼 모드 설정 및 도구 설정
+        print(">>> [Init] 로봇 초기화 시작...", flush=True)
+        
+        # 매뉴얼 모드 설정
         set_robot_mode(ROBOT_MODE_MANUAL)
         wait(0.5)
         
-        print(">>> 설정 적용 중 (Tool/TCP)...")
+        print(">>> [Init] 툴/TCP 설정 중...", flush=True)
         set_tool(ROBOT_TOOL)
         wait(0.5)
         set_tcp(ROBOT_TCP)
         wait(0.5)
         
+        # 자동 모드 변경
         set_robot_mode(ROBOT_MODE_AUTONOMOUS)
         wait(1.0)
         
-        print("=== [Action Server] 로봇 연결 및 설정 완료! ===")
-        print(f"TCP: {get_tcp()} | TOOL: {get_tool()}")
-        print(f"MODE: {get_robot_mode()}")
+        print("=== [System] 로봇 연결 및 설정 완료! ===", flush=True)
+        # 확인용 출력 (에러나면 여기서 걸림)
+        # print(f"TCP: {get_tcp()} | TOOL: {get_tool()}") 
+        # print(f"MODE: {get_robot_mode()}")
+        
     except Exception as e:
-        print(f"!!! 초기화 중 오류 발생: {e}")
+        print(f"!!! 초기화 중 오류 발생: {e}", flush=True)
 
 # 1. 현관문 (Goal Callback)
 def goal_callback(goal_request):
@@ -71,6 +76,7 @@ def execute_callback(goal_handle):
     import tacobot.grab_tools as grab_tools
     import tacobot.pour_tools as pour_tools
     import tacobot.scoop_tools as scoop_tools
+    import tacobot.shake_tools as shake_tools
 
     def move_and_wait(target, v, a):
         print(f"   >>> [Move] 이동 명령 전송 (Vel: {v})", flush=True)
@@ -111,10 +117,6 @@ def execute_callback(goal_handle):
                 print("   >>> [Module] Release 실행", flush=True)
                 grab_tools.release()
                 time.sleep(0.5)
-
-            # 2. 이동 (movej)
-            print(f"   >>> [Move] 이동 명령 전송 (movej)", flush=True)
-            movej(data, vel=v, acc=a)
             
             # [안전장치] 3초 대기
             print("   >>> [Wait] 로봇 이동 완료 대기...", flush=True)
@@ -149,11 +151,26 @@ def execute_callback(goal_handle):
                 return RobotTask.Result(success=False, message="Data Length Error")
 
         # ---------------------------------------------------------
-        # 성공 처리
+        # Case C: 쉐이크 동작 (Shake) - [추가됨]
         # ---------------------------------------------------------
+        elif task_type == 4:
+            print("   >>> [Task] 쉐이크 준비 (이동 -> 잡기 -> 흔들기)", flush=True)
+            
+            # 1. 쉐이크 위치로 이동
+            move_and_wait(data, 60, 40)
+            
+            # 2. 확실하게 잡기 (요청하신 부분)
+            print("   >>> [Module] Grip 재확인", flush=True)
+            grab_tools.grip()
+            time.sleep(0.5)
+
+            # 3. 흔들기 실행
+            shake_tools.shake_action()
+
+        # 성공 처리
         print("🎉 [Success] 작업 완료 신호 전송", flush=True)
         goal_handle.succeed()
-        time.sleep(0.5) # 통신 정리
+        time.sleep(0.5) 
 
         return RobotTask.Result(success=True, message="Success")
 
