@@ -94,7 +94,7 @@ def main(args=None):
     print("\n▶ Step 3: 튀김기로 이동 및 붓기")
     
     # [좌표 확인] 붓기 작업을 할 위치 (튀김기 앞)
-    pos_fryer = [0.0, 0.0, 0.0, 0.0, 90.0, 0.0] 
+    pos_fryer = [0.0, 0.0, 90.0, 0.0, 0.0, 0.0] 
     
     future = controller.send_task(pos_fryer, task_type=3)
     rclpy.spin_until_future_complete(controller, future)
