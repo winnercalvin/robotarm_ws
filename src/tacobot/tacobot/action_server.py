@@ -12,8 +12,8 @@ ROBOT_TOOL = "Tool Weight"
 ROBOT_TCP = "GripperDA_v1"
 
 # 초기화 시 출력하거나 기본값으로 사용할 속도
-VELOCITY = 50 
-ACC = 50
+VELOCITY = 30 
+ACC = 30
 
 DR_init.__dsr__id = ROBOT_ID
 DR_init.__dsr__model = ROBOT_MODEL
@@ -106,13 +106,14 @@ def execute_callback(goal_handle):
         goal_handle.publish_feedback(RobotTask.Feedback(status=f"Processing..."))
 
         # ---------------------------------------------------------
-        # Case A: 일반 이동 및 동작 (Grip / Pour) - 데이터 6개
+        # Case A: 일반 이동 및 동작 (Move / Grip / Drop / Pour)
         # ---------------------------------------------------------
-        if task_type in [1, 2, 3]: 
+        if task_type in [0, 1, 2, 3]: 
             v, a = 50, 50
-            if task_type == 1: v, a = 30, 20
-            elif task_type == 2: v, a = 20, 20
-            elif task_type == 3: v, a = 60, 40
+            if task_type == 0: v, a = 30, 30   # [추가] 0: 단순 이동 속도
+            elif task_type == 1: v, a = 30, 20 # 1: 잡기(Grip)
+            elif task_type == 2: v, a = 20, 20 # 2: 놓기(Drop)
+            elif task_type == 3: v, a = 50, 40 # 3: 붓기(Pour)
 
             # 1. Grip일 경우 Release 먼저 수행
             if task_type == 1:
@@ -120,17 +121,19 @@ def execute_callback(goal_handle):
                 grab_tools.release()
                 time.sleep(0.5)
             
-            # [안전장치] 3초 대기
+            # [공통] 지정된 위치로 조인트 이동(movej) 및 도착 대기
             print("   >>> [Wait] 로봇 이동 완료 대기...", flush=True)
             move_and_wait(data, v, a)
             print("   >>> [Wait] 이동 완료 확인됨!", flush=True)
 
-            # 3. 동작 수행
-            if task_type == 1:   
+            # 3. 도착 후 동작 수행
+            if task_type == 0:
+                # [추가] 단순 이동이므로 여기서는 툴 동작 없이 그냥 프린트만 하고 끝냅니다.
+                print("   >>> [Module] 단순 이동(경유지) 완료", flush=True)
+            elif task_type == 1:   
                 print("   >>> [Module] Grip 실행", flush=True)
                 grab_tools.grip() 
             elif task_type == 2:
-                # [추가된 부분] 놓기(Task 2): 도착하면 그리퍼를 엽니다.
                 print("   >>> [Module] 도착 후 Release(놓기) 실행", flush=True)
                 grab_tools.release()
                 time.sleep(0.5)
@@ -168,7 +171,7 @@ def execute_callback(goal_handle):
             time.sleep(0.5)
             
             # 1. 쉐이크 위치로 이동
-            move_and_wait(data, 60, 40)
+            move_and_wait(data, 50, 40)
             
             # 2. 확실하게 잡기 (요청하신 부분)
             print("   >>> [Module] Grip 재확인", flush=True)
