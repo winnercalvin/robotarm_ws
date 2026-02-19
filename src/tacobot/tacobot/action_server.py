@@ -77,6 +77,7 @@ def execute_callback(goal_handle):
     import tacobot.pour_tools as pour_tools
     import tacobot.scoop_tools as scoop_tools
     import tacobot.shake_tools as shake_tools
+    import tacobot.drain_tools as drain_tools
 
     def move_and_wait(target, v, a):
         print(f"   >>> [Move] 이동 명령 전송 (Vel: {v})", flush=True)
@@ -107,9 +108,10 @@ def execute_callback(goal_handle):
         # ---------------------------------------------------------
         # Case A: 일반 이동 및 동작 (Grip / Pour) - 데이터 6개
         # ---------------------------------------------------------
-        if task_type in [1, 3]: 
+        if task_type in [1, 2, 3]: 
             v, a = 50, 50
             if task_type == 1: v, a = 30, 20
+            elif task_type == 2: v, a = 20, 20
             elif task_type == 3: v, a = 60, 40
 
             # 1. Grip일 경우 Release 먼저 수행
@@ -127,6 +129,11 @@ def execute_callback(goal_handle):
             if task_type == 1:   
                 print("   >>> [Module] Grip 실행", flush=True)
                 grab_tools.grip() 
+            elif task_type == 2:
+                # [추가된 부분] 놓기(Task 2): 도착하면 그리퍼를 엽니다.
+                print("   >>> [Module] 도착 후 Release(놓기) 실행", flush=True)
+                grab_tools.release()
+                time.sleep(0.5)
             elif task_type == 3: 
                 print("   >>> [Module] Pour 실행", flush=True)
                 pour_tools.pour_action()
@@ -155,6 +162,10 @@ def execute_callback(goal_handle):
         # ---------------------------------------------------------
         elif task_type == 4:
             print("   >>> [Task] 쉐이크 준비 (이동 -> 잡기 -> 흔들기)", flush=True)
+
+            print("   >>> [Module] 이동 전 Release 실행", flush=True)
+            grab_tools.release()
+            time.sleep(0.5)
             
             # 1. 쉐이크 위치로 이동
             move_and_wait(data, 60, 40)
@@ -167,12 +178,29 @@ def execute_callback(goal_handle):
             # 3. 흔들기 실행
             shake_tools.shake_action()
 
+        # ---------------------------------------------------------
+        # Task 6: 확실하게 털기 (Drain)
+        # ---------------------------------------------------------
+        elif task_type == 6:
+            if len(data) == 12:
+                print("   >>> [Data] 털기(Drain) 좌표 데이터(12개) 수신 완료", flush=True)
+                p1 = data[0:6]
+                p2 = data[6:12]
+                
+                # 매개변수 넣어서 실행!
+                drain_tools.drain_action(p1, p2)
+            else:
+                print(f"⚠️ [Error] 데이터 개수 오류! (Expected: 12, Got: {len(data)})", flush=True)
+                goal_handle.abort()
+                return RobotTask.Result(success=False, message="Data Length Error")
+
         # 성공 처리
         print("🎉 [Success] 작업 완료 신호 전송", flush=True)
         goal_handle.succeed()
         time.sleep(0.5) 
 
         return RobotTask.Result(success=True, message="Success")
+    
 
     except Exception as e:
         print(f"!!!! 에러 발생 !!!! : {e}", flush=True)
