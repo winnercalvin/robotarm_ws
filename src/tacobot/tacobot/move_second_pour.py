@@ -64,7 +64,7 @@ def pour_action_second():
 
     # 현재 joint / tcp 저장
     current_joints = list(get_current_posj())
-    current_posx = list(get_current_posx())
+    # current_posx = list(get_current_posx()) -> error occurs
 
     # --------------------------------------------------
     # 0️⃣ 그리퍼 CLOSE (안전하게 다시 잡기)
@@ -79,6 +79,7 @@ def pour_action_second():
     # --------------------------------------------------
     print(">>> [Step1] Z축 40mm 상승", flush=True)
 
+    current_posx, sol = get_current_posx()
     lift_pose = list(current_posx)
     lift_pose[2] += 40.0   # Z + 40mm
 
