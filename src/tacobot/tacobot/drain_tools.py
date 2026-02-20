@@ -15,14 +15,14 @@ def drain_action(p1_list, p2_list):
         print(f"   >>> [Drain] Cycle {i+1}/3", flush=True)
         
         # P1으로 이동
-        movel(P1, vel=30, acc=30)
+        movel(P1, vel=90, acc=90)
         time.sleep(1.5) # 이동 대기 시간
         
         # 1초 대기
         time.sleep(1.0) 
         
         # P2로 강하게 치기
-        movel(P2, vel=50, acc=100)
+        movel(P2, vel=700, acc=2500)
         time.sleep(1.0) # 이동 대기 시간
 
     print(">>> [Module] 기름 털기(Drain) 완료", flush=True)

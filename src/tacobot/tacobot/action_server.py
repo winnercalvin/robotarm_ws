@@ -139,64 +139,55 @@ def execute_callback(goal_handle):
                 time.sleep(0.5)
             elif task_type == 3: 
                 print("   >>> [Module] Pour 실행", flush=True)
-                pour_tools.pour_action()
+                pour_tools.pour_action(move_and_wait)
 
         # ---------------------------------------------------------
-        # Case B: 스쿱 동작 (Scoop) - 데이터 24개 (P0~P3)
-        # ---------------------------------------------------------
-        elif task_type == 5:
-            if len(data) == 24:
-                print("   >>> [Data] 스쿱 좌표 데이터(24개) 수신 완료", flush=True)
-                # 데이터 쪼개기 (6개씩)
-                p0 = data[0:6]
-                p1 = data[6:12]
-                p2 = data[12:18]
-                p3 = data[18:24]
-                
-                # 스쿱 모듈 실행 (이동 로직이 내부에 있음)
-                scoop_tools.scoop_action(p0, p1, p2, p3)
-            else:
-                print(f"⚠️ [Error] 데이터 개수 오류! (Expected: 24, Got: {len(data)})", flush=True)
-                goal_handle.abort()
-                return RobotTask.Result(success=False, message="Data Length Error")
-
-        # ---------------------------------------------------------
-        # Case C: 쉐이크 동작 (Shake) - [추가됨]
+        # Case C-1: 쉐이크 동작 (Task 4) - Z축 위아래
         # ---------------------------------------------------------
         elif task_type == 4:
-            print("   >>> [Task] 쉐이크 준비 (이동 -> 잡기 -> 흔들기)", flush=True)
-
-            print("   >>> [Module] 이동 전 Release 실행", flush=True)
-            grab_tools.release()
-            time.sleep(0.5)
-            
-            # 1. 쉐이크 위치로 이동
+            print("   >>> [Task 4] 쉐이크 준비 (위아래 Z축)", flush=True)
             move_and_wait(data, 50, 40)
-            
-            # 2. 확실하게 잡기 (요청하신 부분)
-            print("   >>> [Module] Grip 재확인", flush=True)
-            grab_tools.grip()
-            time.sleep(0.5)
-
-            # 3. 흔들기 실행
-            shake_tools.shake_action()
+            shake_tools.shake_action(direction="z")
 
         # ---------------------------------------------------------
-        # Task 6: 확실하게 털기 (Drain)
+        # Case C-2: 쉐이크 동작 (Task 5) - Y축 좌우 [새로 추가]
+        # ---------------------------------------------------------
+        elif task_type == 5:
+            print("   >>> [Task 5] 쉐이크 준비 (좌우 Y축)", flush=True)
+            move_and_wait(data, 50, 40)
+            shake_tools.shake_action(direction="y")
+
+        # ---------------------------------------------------------
+        # Case B: 스쿱 동작 (Task 6) - [기존 5에서 6으로 변경]
         # ---------------------------------------------------------
         elif task_type == 6:
-            if len(data) == 12:
-                print("   >>> [Data] 털기(Drain) 좌표 데이터(12개) 수신 완료", flush=True)
-                p1 = data[0:6]
-                p2 = data[6:12]
-                
-                # 매개변수 넣어서 실행!
-                drain_tools.drain_action(p1, p2)
+            if len(data) == 24:
+                print("   >>> [Data] 스쿱 좌표 데이터 수신 완료", flush=True)
+                p0, p1, p2, p3 = data[0:6], data[6:12], data[12:18], data[18:24]
+                scoop_tools.scoop_action(p0, p1, p2, p3)
             else:
-                print(f"⚠️ [Error] 데이터 개수 오류! (Expected: 12, Got: {len(data)})", flush=True)
                 goal_handle.abort()
                 return RobotTask.Result(success=False, message="Data Length Error")
 
+        # ---------------------------------------------------------
+        # Case E: 기름 털기 (Task 7) - [기존 6에서 7로 변경]
+        # ---------------------------------------------------------
+        elif task_type == 7:
+            if len(data) == 12:
+                print("   >>> [Data] 털기(Drain) 좌표 데이터 수신 완료", flush=True)
+                p1, p2 = data[0:6], data[6:12]
+                drain_tools.drain_action(p1, p2)
+            else:
+                goal_handle.abort()
+                return RobotTask.Result(success=False, message="Data Length Error")
+
+        # ---------------------------------------------------------
+        # Case F: 소스 뿌리기 (Task 8) - [기존 7에서 8로 변경]
+        # ---------------------------------------------------------
+        elif task_type == 8:
+            print("   >>> [Task] 소스 뿌리기 준비 완료", flush=True)
+            move_and_wait(data, 50, 40)
+            # drizzle_tools.drizzle_action() # 파일 만드신 후 주석 해제!
         # 성공 처리
         print("🎉 [Success] 작업 완료 신호 전송", flush=True)
         goal_handle.succeed()
