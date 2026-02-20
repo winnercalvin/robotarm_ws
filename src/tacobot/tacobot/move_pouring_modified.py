@@ -51,62 +51,64 @@ def initialize_robot():
 
 def pour_action():
     from DSR_ROBOT2 import movej, get_current_posj
+    import time
 
-    # 속도 분리 (기울일 때는 느리게, 복귀는 빠르게)
     VEL_POUR, ACC_POUR = 20, 15
     VEL_RETURN, ACC_RETURN = 40, 30
 
-    print(">>> [Module] 최적화 붓기 시작...", flush=True)
+    print(">>> [Module] J5+J6 복합 붓기 시작...", flush=True)
 
-    # 1. 현재 위치 저장
     current_joints = list(get_current_posj())
 
-    # -----------------------------
-    # 2. 1차 틸팅 (부드럽게)
-    # -----------------------------
+    # --------------------------------
+    # 1차 틸트 (기본 기울기 형성)
+    # --------------------------------
     first_tilt = list(current_joints)
-    first_tilt[5] -= 80.0
+    first_tilt[4] -= 25.0   # 🔥 J5 추가
+    first_tilt[5] -= 60.0   # J6
     movej(first_tilt, vel=VEL_POUR, acc=ACC_POUR)
     time.sleep(2.0)
 
-    # -----------------------------
-    # 3. 2차 틸팅 (완전 배출)
-    # -----------------------------
+    # --------------------------------
+    # 2차 틸트 (완전 배출 각도)
+    # --------------------------------
     second_tilt = list(first_tilt)
-    second_tilt[5] -= 30.0
+    second_tilt[4] -= 15.0   # 🔥 J5 추가 기울기
+    second_tilt[5] -= 40.0
     movej(second_tilt, vel=VEL_POUR, acc=ACC_POUR)
     time.sleep(2.0)
 
-    # -----------------------------
-    # 4. 오버틸트 (잔류물 제거)
-    # -----------------------------
+    # --------------------------------
+    # 오버 틸트 (잔류물 제거)
+    # --------------------------------
     over_tilt = list(second_tilt)
-    over_tilt[5] -= 30.0    # over_tilt[5] -= 10.0
+    over_tilt[4] -= 5.0     # 🔥 J5 조금 더
+    over_tilt[5] -= 20.0
     movej(over_tilt, vel=15, acc=10)
     time.sleep(1.0)
 
-    # -----------------------------
-    # 5. 마이크로 쉐이킹 (잔여물 제거)
-    # -----------------------------
+    # --------------------------------
+    # 마이크로 쉐이킹 (J6만 진동)
+    # --------------------------------
     for _ in range(2):
         shake_up = list(over_tilt)
-        shake_up[5] += 5.0
+        shake_up[5] += 6.0
         movej(shake_up, vel=30, acc=20)
-        time.sleep(0.5)
+        time.sleep(0.4)
 
         shake_down = list(over_tilt)
-        shake_down[5] -= 5.0
+        shake_down[5] -= 6.0
         movej(shake_down, vel=30, acc=20)
-        time.sleep(0.5)
+        time.sleep(0.4)
 
-    # -----------------------------
-    # 6. 원위치 복귀 (빠르게)
-    # -----------------------------
+    # --------------------------------
+    # 복귀
+    # --------------------------------
     print(">>> [Module] 복귀 중...", flush=True)
     movej(current_joints, vel=VEL_RETURN, acc=ACC_RETURN)
     time.sleep(2.0)
 
-    print(">>> [Module] 붓기 완료 (잔류 최소화)", flush=True)
+    print(">>> [Module] 붓기 완료 (J5+J6 안정화)", flush=True)
 ###############################################################
 
 def main(args=None):
@@ -120,8 +122,8 @@ def main(args=None):
         # perform_task()
         # perform_task_unit1()
         # perform_task_unit2()
-        # pour_action()
-        pour_action_frame(portion=1)
+        pour_action()
+        # pour_action_frame(portion=1)
 
     except KeyboardInterrupt:
         print("\nNode interrupted by user. Shutting down...")
