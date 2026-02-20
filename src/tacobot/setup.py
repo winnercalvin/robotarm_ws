@@ -26,6 +26,7 @@ setup(
         'console_scripts': [
             'scooper_grab = tacobot.scooper_grab:main',
             'home = tacobot.home:main',
+            'move_pouring_modified = tacobot.move_pouring_modified:main'
         ],
     },
 )
