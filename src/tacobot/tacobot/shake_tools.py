@@ -10,7 +10,7 @@ def shake_action(direction="z"):
     WAIT_TIME = (PERIOD * REPEAT) + 0.5 
     
     # -----------------------------
-    # 1. Z축 방향 흔들기 (위아래)
+    # 1. Z축 방향 흔들기 (위아래) task 4번
     # -----------------------------
     if direction == "z":
         print(f"   >>> [Shake] 위아래(Z축) 흔들기 시작 ({WAIT_TIME}s wait)", flush=True)
@@ -24,7 +24,7 @@ def shake_action(direction="z"):
         time.sleep(WAIT_TIME)
 
     # -----------------------------
-    # 2. Y축 방향 흔들기 (좌우)
+    # 2. Y축 방향 흔들기 (좌우) task 5번
     # -----------------------------
     elif direction == "y":
         print(f"   >>> [Shake] 좌우(Y축) 흔들기 시작 ({WAIT_TIME}s wait)", flush=True)

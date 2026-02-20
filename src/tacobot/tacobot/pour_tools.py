@@ -28,7 +28,7 @@ def pour_action(move_and_wait_func=None):
     # 2. 1차 틸팅 (부드럽게)
     # -----------------------------
     pour_pose = list(current_joints)
-    pour_pose[3] = current_joints[3] + 80.0 # -50
+    pour_pose[3] = current_joints[3] + 50.0 # -50
     # pour_pose[4] = current_joints[4] - 110.0
     pour_pose[5] = current_joints[5] + 80.0
 

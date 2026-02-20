@@ -143,30 +143,24 @@ def main(args=None):
             # ============================================================
             # Step 2. 용기에 담긴 감자를 튀김트레이에 붓는다 (Task 3)
             # ============================================================
-            print("\n▶ Step 2-1: 튀김트레이 위 안전 경유지로 이동")
-            # 목표 위치보다 위쪽이나 안전한 각도를 임의로 설정 (값은 실제 로봇에 맞게 수정)
-            pos_waypoint = [42.81, 26.04, 44.66, 0.96, 109.46, -10.6] 
-            future_wp = controller.send_task(pos_waypoint, task_type=0) # 단순 이동(0)
-            rclpy.spin_until_future_complete(controller, future_wp)
-
-            wp_handle = future_wp.result()
-            if wp_handle.accepted:
-                wp_res_future = wp_handle.get_result_async()
-                rclpy.spin_until_future_complete(controller, wp_res_future)
-                print("✅ 경유지 도착 완료!")
-
-            time.sleep(1.0) # 안정화 대기
-
-            print("\n▶ Step 2-2: 감자를 튀김트레이에 붓는다")
-            pos_pour_potato = [-2.89,19.67,64.82,41.09,86.45,-4.43] 
-            future = controller.send_task(pos_pour_potato, task_type=3)
+            print("\n▶ Step 2: 튀김트레이 경유지를 거쳐 붓기 위치로 이동 (블렌딩)")
+            
+            # 경유지
+            pos_waypoint = [43.62, 28.13, 33.73, 1.58, 115.38, -0.02] 
+            # 최종 붓기 도착지
+            pos_pour_potato = [-2.89, 19.67, 64.82, 41.09, 86.45, -4.43] 
+            
+            # 🌟 두 좌표를 합쳐서(12개 데이터) 한 번에 전송합니다!
+            combined_pour_data = pos_waypoint + pos_pour_potato
+            
+            future = controller.send_task(combined_pour_data, task_type=3)
             rclpy.spin_until_future_complete(controller, future)
 
             goal_handle = future.result()
             if goal_handle.accepted:
                 res_future = goal_handle.get_result_async()
                 rclpy.spin_until_future_complete(controller, res_future)
-                print("✅ 감자 붓기 완료!")
+                print("✅ 멈춤 없는 스무스한 이동 및 감자 붓기 완료!")
             time.sleep(2.0)
 
             # ============================================================
@@ -501,9 +495,6 @@ def main(args=None):
 
                         print(f"✅ '{sauce_id}' 소스 뿌리기 완벽하게 종료!\n")
 
-            # ============================================================
-            # Step 10. (플로우차트 마무리) 서빙 위치로 이동
-            # ============================================================
             # ============================================================
             # 🌟 Step 10. (플로우차트 마무리) 서빙 위치로 이동
             # ============================================================

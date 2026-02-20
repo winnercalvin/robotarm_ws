@@ -70,7 +70,7 @@ def execute_callback(goal_handle):
     from DSR_ROBOT2 import (
         movej, wait, get_current_posj, # [필수] 현재 위치 확인 함수
         set_tool, set_tcp, get_tool, get_tcp, 
-        get_robot_mode, set_robot_mode, 
+        get_robot_mode, set_robot_mode, movesj,
         ROBOT_MODE_MANUAL, ROBOT_MODE_AUTONOMOUS
     )
     import tacobot.grab_tools as grab_tools
@@ -78,6 +78,7 @@ def execute_callback(goal_handle):
     import tacobot.scoop_tools as scoop_tools
     import tacobot.shake_tools as shake_tools
     import tacobot.drain_tools as drain_tools
+    import tacobot.drizzle_tools as drizzle_tools
 
     def move_and_wait(target, v, a):
         print(f"   >>> [Move] 이동 명령 전송 (Vel: {v})", flush=True)
@@ -102,18 +103,33 @@ def execute_callback(goal_handle):
                 
             time.sleep(0.1) # 0.1초 간격으로 확인
 
+    def wait_for_arrival(target):
+            start_t = time.time()
+            while True:
+                current = list(get_current_posj())
+                diff = sum([abs(target[i] - current[i]) for i in range(6)])
+                if diff < 2.0:
+                    print("   >>> [Wait] 최종 목적지 도착 확인 완료!", flush=True)
+                    break
+                if time.time() - start_t > 15.0:
+                    break
+                time.sleep(0.1)
+
     try:
         goal_handle.publish_feedback(RobotTask.Feedback(status=f"Processing..."))
 
         # ---------------------------------------------------------
         # Case A: 일반 이동 및 동작 (Move / Grip / Drop / Pour)
         # ---------------------------------------------------------
+        # ---------------------------------------------------------
+        # Case A: 일반 이동 및 동작 (Move / Grip / Drop / Pour)
+        # ---------------------------------------------------------
         if task_type in [0, 1, 2, 3]: 
             v, a = 50, 50
-            if task_type == 0: v, a = 30, 30   # [추가] 0: 단순 이동 속도
-            elif task_type == 1: v, a = 30, 20 # 1: 잡기(Grip)
-            elif task_type == 2: v, a = 20, 20 # 2: 놓기(Drop)
-            elif task_type == 3: v, a = 50, 40 # 3: 붓기(Pour)
+            if task_type == 0: v, a = 30, 30   
+            elif task_type == 1: v, a = 30, 20 
+            elif task_type == 2: v, a = 20, 20 
+            elif task_type == 3: v, a = 50, 40 
 
             # 1. Grip일 경우 Release 먼저 수행
             if task_type == 1:
@@ -121,14 +137,26 @@ def execute_callback(goal_handle):
                 grab_tools.release()
                 time.sleep(0.5)
             
-            # [공통] 지정된 위치로 조인트 이동(movej) 및 도착 대기
-            print("   >>> [Wait] 로봇 이동 완료 대기...", flush=True)
-            move_and_wait(data, v, a)
-            print("   >>> [Wait] 이동 완료 확인됨!", flush=True)
+            # 2. 이동 로직 분리 (블렌딩 vs 일반)
+            if task_type == 3 and len(data) == 12:
+                # 🌟 [핵심 수정 1] movesj를 위해 posj 형변환 객체를 임포트합니다.
+                from DSR_ROBOT2 import posj 
+                
+                wp = data[0:6]
+                target = data[6:12]
+                print("   >>> [Move] 경유지를 거쳐 논스톱(Spline) 이동 중...", flush=True)
+                
+                # 🌟 [핵심 수정 2] 단순 리스트가 아닌 posj()로 감싸서 넘겨주어야 에러가 안 납니다!
+                movesj([posj(wp), posj(target)], vel=v, acc=a)
+                wait_for_arrival(target) # 도착 대기
+            else:
+                # 그 외(데이터 6개)의 경우 기존처럼 일반 이동 수행
+                print("   >>> [Wait] 로봇 일반 이동 완료 대기...", flush=True)
+                move_and_wait(data, v, a)
+                print("   >>> [Wait] 이동 완료 확인됨!", flush=True)
 
-            # 3. 도착 후 동작 수행
+            # 3. 도착 후 동작 수행 (🌟 [핵심 수정 3] 중복 이동 코드 제거 및 깔끔하게 정리)
             if task_type == 0:
-                # [추가] 단순 이동이므로 여기서는 툴 동작 없이 그냥 프린트만 하고 끝냅니다.
                 print("   >>> [Module] 단순 이동(경유지) 완료", flush=True)
             elif task_type == 1:   
                 print("   >>> [Module] Grip 실행", flush=True)
@@ -138,7 +166,7 @@ def execute_callback(goal_handle):
                 grab_tools.release()
                 time.sleep(0.5)
             elif task_type == 3: 
-                print("   >>> [Module] Pour 실행", flush=True)
+                print("   >>> [Module] Pour(최적화 붓기) 실행", flush=True)
                 pour_tools.pour_action(move_and_wait)
 
         # ---------------------------------------------------------
@@ -186,8 +214,9 @@ def execute_callback(goal_handle):
         # ---------------------------------------------------------
         elif task_type == 8:
             print("   >>> [Task] 소스 뿌리기 준비 완료", flush=True)
-            move_and_wait(data, 50, 40)
-            # drizzle_tools.drizzle_action() # 파일 만드신 후 주석 해제!
+            move_and_wait(data, 900, 900)
+            print("   >>> [Module] 지그재그 소스 뿌리기 실행", flush=True)
+            drizzle_tools.drizzle_action()
         # 성공 처리
         print("🎉 [Success] 작업 완료 신호 전송", flush=True)
         goal_handle.succeed()
