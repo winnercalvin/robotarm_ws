@@ -158,7 +158,7 @@ def main(args=None):
             time.sleep(1.0) # 안정화 대기
 
             print("\n▶ Step 2-2: 감자를 튀김트레이에 붓는다")
-            pos_pour_potato = [23.49, 25.57, 81.96, -76.22, 76.74, 69.84] 
+            pos_pour_potato = [-2.89,19.67,64.82,41.09,86.45,-4.43] 
             future = controller.send_task(pos_pour_potato, task_type=3)
             rclpy.spin_until_future_complete(controller, future)
 
