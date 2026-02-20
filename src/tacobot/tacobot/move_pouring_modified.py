@@ -50,65 +50,76 @@ def initialize_robot():
 ###############################################################
 
 def pour_action():
-    from DSR_ROBOT2 import movej, get_current_posj
+    from DSR_ROBOT2 import movej, get_current_posj, set_digital_output
     import time
 
-    VEL_POUR, ACC_POUR = 20, 15
+    VEL_POUR, ACC_POUR = 15, 10
     VEL_RETURN, ACC_RETURN = 40, 30
 
-    print(">>> [Module] J5+J6 복합 붓기 시작...", flush=True)
+    print(">>> [Module] 강한 붓기 시작...", flush=True)
 
     current_joints = list(get_current_posj())
 
     # --------------------------------
-    # 1차 틸트 (기본 기울기 형성)
+    # 🔥 0️⃣ 시작 시 그리퍼 동작 (OPEN → CLOSE/ 필요시 생략가능)
     # --------------------------------
-    first_tilt = list(current_joints)
-    first_tilt[4] -= 25.0   # 🔥 J5 추가
-    first_tilt[5] -= 60.0   # J6
-    movej(first_tilt, vel=VEL_POUR, acc=ACC_POUR)
-    time.sleep(2.0)
-
-    # --------------------------------
-    # 2차 틸트 (완전 배출 각도)
-    # --------------------------------
-    second_tilt = list(first_tilt)
-    second_tilt[4] -= 15.0   # 🔥 J5 추가 기울기
-    second_tilt[5] -= 40.0
-    movej(second_tilt, vel=VEL_POUR, acc=ACC_POUR)
-    time.sleep(2.0)
-
-    # --------------------------------
-    # 오버 틸트 (잔류물 제거)
-    # --------------------------------
-    over_tilt = list(second_tilt)
-    over_tilt[4] -= 5.0     # 🔥 J5 조금 더
-    over_tilt[5] -= 20.0
-    movej(over_tilt, vel=15, acc=10)
+    print(">>> [Gripper] Closing...", flush=True)
+    set_digital_output(2, 0)  # OPEN OFF
+    set_digital_output(1, 1)  # CLOSE ON
     time.sleep(1.0)
 
     # --------------------------------
-    # 마이크로 쉐이킹 (J6만 진동)
+    # 1️⃣ 강한 기울기
     # --------------------------------
-    for _ in range(2):
-        shake_up = list(over_tilt)
-        shake_up[5] += 6.0
-        movej(shake_up, vel=30, acc=20)
-        time.sleep(0.4)
+    pour_pose = list(current_joints)
+    pour_pose[4] = current_joints[4] - 110.0
+    pour_pose[5] = current_joints[5] - 140.0
 
-        shake_down = list(over_tilt)
-        shake_down[5] -= 6.0
-        movej(shake_down, vel=30, acc=20)
-        time.sleep(0.4)
+    movej(pour_pose, vel=VEL_POUR, acc=ACC_POUR)
+    time.sleep(3.0)
 
     # --------------------------------
-    # 복귀
+    # 2️⃣ 오버 틸트 (필요시 생략 or 추가)
+    # --------------------------------
+    # over_pose = list(pour_pose)
+    # over_pose[4] -= 20.0
+    # over_pose[5] -= 20.0
+
+    # movej(over_pose, vel=10, acc=8)
+    # time.sleep(2.0)
+
+    # --------------------------------
+    # 3️⃣ 쉐이킹 (필요시 생략 or 추가)
+    # --------------------------------
+    """
+        for _ in range(3):
+        shake = list(over_pose)
+        shake[5] += 8.0
+        movej(shake, vel=25, acc=20)
+        time.sleep(0.3)
+
+        movej(over_pose, vel=25, acc=20)
+        time.sleep(0.3)
+
+    """
+
+
+    # --------------------------------
+    # 4️⃣ 복귀 (for testing -> 필요시 생략 가능)
     # --------------------------------
     print(">>> [Module] 복귀 중...", flush=True)
     movej(current_joints, vel=VEL_RETURN, acc=ACC_RETURN)
     time.sleep(2.0)
 
-    print(">>> [Module] 붓기 완료 (J5+J6 안정화)", flush=True)
+    # --------------------------------
+    # 🔥 5️⃣ 복귀 후 그리퍼 OPEN (필요시 생략가능)
+    # --------------------------------
+    print(">>> [Gripper] Opening...", flush=True)
+    set_digital_output(1, 0)  # CLOSE OFF
+    set_digital_output(2, 1)  # OPEN ON
+    time.sleep(1.0)
+
+    print(">>> [Module] 붓기 완료 (Gripper 포함)", flush=True)
 ###############################################################
 
 def main(args=None):
@@ -122,8 +133,8 @@ def main(args=None):
         # perform_task()
         # perform_task_unit1()
         # perform_task_unit2()
-        pour_action()
-        # pour_action_frame(portion=1)
+        # pour_action()
+        pour_action_frame(portion=1)
 
     except KeyboardInterrupt:
         print("\nNode interrupted by user. Shutting down...")
@@ -135,4 +146,3 @@ def main(args=None):
 
 if __name__ == "__main__":
     main()
-
