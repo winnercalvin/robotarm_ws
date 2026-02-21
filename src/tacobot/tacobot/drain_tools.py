@@ -22,7 +22,7 @@ def drain_action(p1_list, p2_list):
         time.sleep(1.0) 
         
         # P2로 강하게 치기
-        movel(P2, vel=700, acc=2500)
+        movel(P2, vel=1000, acc=5000)
         time.sleep(1.0) # 이동 대기 시간
 
     print(">>> [Module] 기름 털기(Drain) 완료", flush=True)

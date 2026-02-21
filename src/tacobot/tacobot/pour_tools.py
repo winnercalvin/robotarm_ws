@@ -15,36 +15,36 @@ def pour_action(move_and_wait_func=None):
     VEL_POUR, ACC_POUR = 15, 10
     VEL_RETURN, ACC_RETURN = 40, 30
 
-    PERIOD = 2.0
-    REPEAT = 3
-    WAIT_TIME = (PERIOD * REPEAT) + 0.5 # 여유 시간 0.5초 추가
+    # PERIOD = 2.0
+    # REPEAT = 3
+    # WAIT_TIME = (PERIOD * REPEAT) + 0.5 # 여유 시간 0.5초 추가
 
     print("   >>> [Pour] 최적화 붓기(Pouring) 시작...", flush=True)
 
     # 1. 현재 조인트 위치 저장
     current_joints = list(get_current_posj())
+    pour_pose = list(current_joints)
 
     # -----------------------------
     # 2. 1차 틸팅 (부드럽게)
     # -----------------------------
-    pour_pose = list(current_joints)
-    pour_pose[3] = current_joints[3] + 50.0 # -50
+    pour_pose[3] = current_joints[3] + 70.0 # -50
     # pour_pose[4] = current_joints[4] - 110.0
-    pour_pose[5] = current_joints[5] + 80.0
+    pour_pose[5] = current_joints[5] + 60.0
 
     movej(pour_pose, vel=VEL_POUR, acc=ACC_POUR)
     time.sleep(3.0)
 
-    # 6. Y축 방향 흔들기 (좌우)
-    print(f"   >>> [Shake] 좌우 흔들기 시작 ({WAIT_TIME}s wait)", flush=True)
-    move_periodic(
-        amp=[0, 0, 50, 0, 0, 0],
-        period=PERIOD,
-        atime=0.2,
-        repeat=REPEAT,
-        ref=DR_TOOL
-    )
-    time.sleep(WAIT_TIME)
+    # # 6. Y축 방향 흔들기 (좌우)
+    # print(f"   >>> [Shake] 좌우 흔들기 시작 ({WAIT_TIME}s wait)", flush=True)
+    # move_periodic(
+    #     amp=[0, 0, 50, 0, 0, 0],
+    #     period=PERIOD,
+    #     atime=0.2,
+    #     repeat=REPEAT,
+    #     ref=DR_TOOL
+    # )
+    # time.sleep(WAIT_TIME)
 
     # -----------------------------
     # 6. 원위치 복귀 

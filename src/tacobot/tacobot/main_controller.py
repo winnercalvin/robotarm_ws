@@ -98,7 +98,7 @@ def main(args=None):
             
             time.sleep(1.0) # 다음 동작 전 1초 대기
 
-            print("\n▶ Step 1: 소분된 용기를 잡는다")
+            print("\n▶ Step 1-2: 소분된 용기를 잡는다")
             pos_scooper = [42.62, 49.44, 68.33, 4.33, 66.55, -10.6]
             future = controller.send_task(pos_scooper, task_type=1)
             if future is None:
@@ -146,9 +146,9 @@ def main(args=None):
             print("\n▶ Step 2: 튀김트레이 경유지를 거쳐 붓기 위치로 이동 (블렌딩)")
             
             # 경유지
-            pos_waypoint = [43.62, 28.13, 33.73, 1.58, 115.38, -0.02] 
+            pos_waypoint = [43.08, 31.77, 29.97, 3.24, 114.69, -8.73] 
             # 최종 붓기 도착지
-            pos_pour_potato = [-2.89, 19.67, 64.82, 41.09, 86.45, -4.43] 
+            pos_pour_potato = [-20.41, 30.97, 47.87, 27.2, 94.64, -19.27] 
             
             # 🌟 두 좌표를 합쳐서(12개 데이터) 한 번에 전송합니다!
             combined_pour_data = pos_waypoint + pos_pour_potato
@@ -168,7 +168,7 @@ def main(args=None):
             # ============================================================
             print("\n▶ Step 3-1: 튀김트레이 위 안전 경유지로 이동")
             # 목표 위치보다 위쪽이나 안전한 각도를 임의로 설정 (값은 실제 로봇에 맞게 수정)
-            pos_waypoint = [-6.5, -9.27, 85.77, -15.91, 91.24, -10.6] 
+            pos_waypoint = [25.82, -15.82, 87.7, 11.99, 92.98, -8.73] 
             future_wp = controller.send_task(pos_waypoint, task_type=0) # 단순 이동(0)
             rclpy.spin_until_future_complete(controller, future_wp)
 
@@ -180,7 +180,7 @@ def main(args=None):
 
             time.sleep(1.0) # 안정화 대기
             print("\n▶ Step 3-2: 빈 용기를 지정된 위치에 내려놓는다 (놓기)")
-            pos_place_container = [-25.16, 5.14, 108.90, 0.78, 63.87, -10.63] 
+            pos_place_container = [13.66, -2.72, 115.63, 2.60, 66.76, -31.08] 
             future = controller.send_task(pos_place_container, task_type=2)
             rclpy.spin_until_future_complete(controller, future)
 
@@ -196,7 +196,7 @@ def main(args=None):
             # ============================================================
             print("\n▶ Step 4-1")
             # 목표 위치보다 위쪽이나 안전한 각도를 임의로 설정 (값은 실제 로봇에 맞게 수정)
-            pos_waypoint = [-23.33, -5.03, 75.74, 2.92, 98.92, -10.6] 
+            pos_waypoint = [29.15, -6.78, 79.14, 4.16, 104.55, -7.97] 
             future_wp = controller.send_task(pos_waypoint, task_type=0) # 단순 이동(0)
             rclpy.spin_until_future_complete(controller, future_wp)
 
@@ -210,7 +210,7 @@ def main(args=None):
 
             print("\n▶ Step 4-2")
             # 목표 위치보다 위쪽이나 안전한 각도를 임의로 설정 (값은 실제 로봇에 맞게 수정)
-            pos_waypoint = [1.53, 21.15, 61.79, -1.0, 87.87, -89.22] 
+            pos_waypoint = [2.55, 10.11, 71.86, -1.84, 78.37, -87.35] 
             future_wp = controller.send_task(pos_waypoint, task_type=0) # 단순 이동(0)
             rclpy.spin_until_future_complete(controller, future_wp)
 
@@ -224,7 +224,7 @@ def main(args=None):
 
             print("\n▶ Step 4-3")
             # 목표 위치보다 위쪽이나 안전한 각도를 임의로 설정 (값은 실제 로봇에 맞게 수정)
-            pos_waypoint = [1.26, 30.91, 57.76, -0.93, 93.12, -86.66] 
+            pos_waypoint = [1.76, 24.14, 67.56, -0.66, 85.16, -87.34] 
             future_wp = controller.send_task(pos_waypoint, task_type=1) 
             rclpy.spin_until_future_complete(controller, future_wp)
 
@@ -236,8 +236,64 @@ def main(args=None):
 
             time.sleep(1.0) # 안정화 대기
 
-            print("\n▶ Step 4-4: 튀김트레이를 잡고 흔든다 (잘 튀겨지게)")
-            pos_shake_tray = [1.44, 25.89, 44.01, -1.4, 106.0, -86.66]
+            print("\n▶ Step 4-4")
+            # 목표 위치보다 위쪽이나 안전한 각도를 임의로 설정 (값은 실제 로봇에 맞게 수정)
+            pos_waypoint = [1.11, 13.8, 72.06, 0.22, 86.3, -87.3] 
+            future_wp = controller.send_task(pos_waypoint, task_type=0) 
+            rclpy.spin_until_future_complete(controller, future_wp)
+
+            wp_handle = future_wp.result()
+            if wp_handle.accepted:
+                wp_res_future = wp_handle.get_result_async()
+                rclpy.spin_until_future_complete(controller, wp_res_future)
+                print("✅ 경유지 도착 완료!")
+
+            time.sleep(1.0) # 안정화 대기
+
+            print("\n▶ Step 4-5")
+            # 목표 위치보다 위쪽이나 안전한 각도를 임의로 설정 (값은 실제 로봇에 맞게 수정)
+            pos_waypoint = [1.92, 22.69, 40.16, 0.4, 133.09, -87.3] 
+            future_wp = controller.send_task(pos_waypoint, task_type=0) 
+            rclpy.spin_until_future_complete(controller, future_wp)
+
+            wp_handle = future_wp.result()
+            if wp_handle.accepted:
+                wp_res_future = wp_handle.get_result_async()
+                rclpy.spin_until_future_complete(controller, wp_res_future)
+                print("✅ 경유지 도착 완료!")
+
+            time.sleep(1.0) # 안정화 대기
+
+            print("\n▶ Step 4-6")
+            # 목표 위치보다 위쪽이나 안전한 각도를 임의로 설정 (값은 실제 로봇에 맞게 수정)
+            pos_waypoint = [1.53, 26.24, 55.19, 0.46, 105.61, -87.31] 
+            future_wp = controller.send_task(pos_waypoint, task_type=0) 
+            rclpy.spin_until_future_complete(controller, future_wp)
+
+            wp_handle = future_wp.result()
+            if wp_handle.accepted:
+                wp_res_future = wp_handle.get_result_async()
+                rclpy.spin_until_future_complete(controller, wp_res_future)
+                print("✅ 경유지 도착 완료!")
+
+            time.sleep(1.0) # 안정화 대기
+
+            print("\n▶ Step 4-7")
+            # 목표 위치보다 위쪽이나 안전한 각도를 임의로 설정 (값은 실제 로봇에 맞게 수정)
+            pos_waypoint = [1.53, 33.27, 49.67, 0.07, 108.93, -87.31] 
+            future_wp = controller.send_task(pos_waypoint, task_type=0) 
+            rclpy.spin_until_future_complete(controller, future_wp)
+
+            wp_handle = future_wp.result()
+            if wp_handle.accepted:
+                wp_res_future = wp_handle.get_result_async()
+                rclpy.spin_until_future_complete(controller, wp_res_future)
+                print("✅ 경유지 도착 완료!")
+
+            time.sleep(1.0) # 안정화 대기
+
+            print("\n▶ Step 4-8: 튀김트레이를 잡고 흔든다 (잘 튀겨지게)")
+            pos_shake_tray = [1.27, 43.45, 38.39, 0.1, 117.29, -87.31]
             future = controller.send_task(pos_shake_tray, task_type=5)
             rclpy.spin_until_future_complete(controller, future)
 
@@ -252,9 +308,23 @@ def main(args=None):
             # ============================================================
             # Step 5. 튀김트레이를 잡고 기름을 턴다 (Task 6)
             # ============================================================
-            print("\n▶ Step 5: 기름을 턴다 (Drain)")
-            drain_p1 = [409.11, 31.77, 495.55, 1.8, 151.38, -92.32] 
-            drain_p2 = [386.48, 25.81, 219.07, 169.94, -169.33, 77.97] 
+            print("\n▶ Step 5-1")
+            # 목표 위치보다 위쪽이나 안전한 각도를 임의로 설정 (값은 실제 로봇에 맞게 수정)
+            pos_waypoint = [1.53, 33.27, 49.67, 0.07, 108.93, -87.31] 
+            future_wp = controller.send_task(pos_waypoint, task_type=0) 
+            rclpy.spin_until_future_complete(controller, future_wp)
+
+            wp_handle = future_wp.result()
+            if wp_handle.accepted:
+                wp_res_future = wp_handle.get_result_async()
+                rclpy.spin_until_future_complete(controller, wp_res_future)
+                print("✅ 경유지 도착 완료!")
+
+            time.sleep(1.0) # 안정화 대기
+
+            print("\n▶ Step 5-2: 기름을 턴다 (Drain)")
+            drain_p1 = [402.16, 9.82, 459.29, 178.03, -148.43, 89.87] 
+            drain_p2 = [470.54, 26.17, 186.83, 8.84, 164.47, -78.25] 
             full_drain_data = drain_p1 + drain_p2
             
             future = controller.send_task(full_drain_data, task_type=7)
@@ -270,12 +340,45 @@ def main(args=None):
                 print("❌ 서버가 작업을 거부했습니다.")
             time.sleep(2.0)
 
+
             # ============================================================
-            # Step 6. 튀김트레이에 담긴 감자칩을 용기에 붓는다 (Task 3)
+            # Step 6. 튀김트레이를 흔들기 탁탁탁 (Task 4)
             # ============================================================
-            print("\n▶ Step 6-1: 튀김트레이 위 안전 경유지로 이동")
+
+            print("\n▶ Step 6-1")
             # 목표 위치보다 위쪽이나 안전한 각도를 임의로 설정 (값은 실제 로봇에 맞게 수정)
-            pos_waypoint = [-14.17, -22.56, 100.07, -26.33, 76.59, -116.59] 
+            pos_waypoint = [2.15, 5.97, 61.84, -0.47, 100.58, -87.31] 
+            future_wp = controller.send_task(pos_waypoint, task_type=0) 
+            rclpy.spin_until_future_complete(controller, future_wp)
+
+            wp_handle = future_wp.result()
+            if wp_handle.accepted:
+                wp_res_future = wp_handle.get_result_async()
+                rclpy.spin_until_future_complete(controller, wp_res_future)
+                print("✅ 경유지 도착 완료!")
+
+            time.sleep(1.0) # 안정화 대기
+
+            print("\n▶ Step 6-2")
+            # 목표 위치보다 위쪽이나 안전한 각도를 임의로 설정 (값은 실제 로봇에 맞게 수정)
+            pos_waypoint = [2.15, 18.87, 57.06, -2.26, 89.04, -87.31] 
+            future_wp = controller.send_task(pos_waypoint, task_type=4) 
+            rclpy.spin_until_future_complete(controller, future_wp)
+
+            wp_handle = future_wp.result() 
+            if wp_handle.accepted:
+                wp_res_future = wp_handle.get_result_async()
+                rclpy.spin_until_future_complete(controller, wp_res_future)
+                print("✅ 탁탁탁 시작!")
+
+            time.sleep(1.0) # 안정화 대기
+
+            # ============================================================
+            # Step 7. 튀김트레이에 담긴 감자칩을 용기에 붓는다 (Task 3)
+            # ============================================================
+            print("\n▶ Step 7-1: 튀김트레이 위 안전 경유지로 이동")
+            # 목표 위치보다 위쪽이나 안전한 각도를 임의로 설정 (값은 실제 로봇에 맞게 수정)
+            pos_waypoint = [27.61, -25.45, 85.36, 13.7, 96.56, -87.3] 
             future_wp = controller.send_task(pos_waypoint, task_type=0) # 단순 이동(0)
             rclpy.spin_until_future_complete(controller, future_wp)
 
@@ -287,8 +390,8 @@ def main(args=None):
 
             time.sleep(1.0) # 안정화 대기
 
-            print("\n▶ Step 6-2: 감자칩을 최종 용기에 붓는다")
-            pos_pour_chips = [-19.83, -18.83, 123.52, -33.14, 55.37, -112.2] 
+            print("\n▶ Step 7-2: 감자칩을 최종 용기에 붓는다")
+            pos_pour_chips = [-14.32, -33.3, 122.38, 18.34, 76.87, -111.05] 
             future = controller.send_task(pos_pour_chips, task_type=3)
             rclpy.spin_until_future_complete(controller, future)
 
@@ -300,11 +403,11 @@ def main(args=None):
             time.sleep(2.0)
 
             # ============================================================
-            # Step 7. 빈 튀김트레이를 제자리에 내려놓는다 (Task 2)
+            # Step 8. 빈 튀김트레이를 제자리에 내려놓는다 (Task 2)
             # ============================================================
-            print("\n▶ Step 7-1: 튀김트레이 위 안전 경유지로 이동")
+            print("\n▶ Step 8-1: 튀김트레이 위 안전 경유지로 이동")
             # 목표 위치보다 위쪽이나 안전한 각도를 임의로 설정 (값은 실제 로봇에 맞게 수정)
-            pos_waypoint = [-15.99, -24.11, 100.46, -9.29, 74.05, -112.21] 
+            pos_waypoint = [27.6, -6.79, 66.7, 1.72, 117.22, -87.31] 
             future_wp = controller.send_task(pos_waypoint, task_type=0) # 단순 이동(0)
             rclpy.spin_until_future_complete(controller, future_wp)
 
@@ -316,9 +419,9 @@ def main(args=None):
 
             time.sleep(1.0) # 안정화 대기
 
-            print("\n▶ Step 7-2: 튀김트레이 위 안전 경유지로 이동")
+            print("\n▶ Step 8-2: 튀김트레이 위 안전 경유지로 이동")
             # 목표 위치보다 위쪽이나 안전한 각도를 임의로 설정 (값은 실제 로봇에 맞게 수정)
-            pos_waypoint = [1.35, 24.7, 56.66, -0.59, 93.79, -89.56] 
+            pos_waypoint = [3.33, 4.83, 78.71, -1.82, 85.91, -87.31] 
             future_wp = controller.send_task(pos_waypoint, task_type=0) # 단순 이동(0)
             rclpy.spin_until_future_complete(controller, future_wp)
 
@@ -330,8 +433,22 @@ def main(args=None):
 
             time.sleep(1.0) # 안정화 대기
 
-            print("\n▶ Step 7-3: 튀김트레이를 제자리에 내려놓는다 (놓기)")
-            pos_place_tray = [1.25, 24.98, 66.79, -0.56, 83.45, -89.56] 
+            print("\n▶ Step 8-3: 튀김트레이 위 안전 경유지로 이동")
+            # 목표 위치보다 위쪽이나 안전한 각도를 임의로 설정 (값은 실제 로봇에 맞게 수정)
+            pos_waypoint = [0.95, 14.98, 73.94, 0.22, 77.5, -87.31] 
+            future_wp = controller.send_task(pos_waypoint, task_type=0) # 단순 이동(0)
+            rclpy.spin_until_future_complete(controller, future_wp)
+
+            wp_handle = future_wp.result()
+            if wp_handle.accepted:
+                wp_res_future = wp_handle.get_result_async()
+                rclpy.spin_until_future_complete(controller, wp_res_future)
+                print("✅ 경유지 도착 완료!")
+
+            time.sleep(1.0) # 안정화 대기
+
+            print("\n▶ Step 8-4: 튀김트레이를 제자리에 내려놓는다 (놓기)")
+            pos_place_tray = [2.28, 15.08, 80.36, -2.05, 69.63, -86.94] 
             future = controller.send_task(pos_place_tray, task_type=2)
             rclpy.spin_until_future_complete(controller, future)
 
@@ -342,10 +459,10 @@ def main(args=None):
                 print("\n✅ 튀김트레이 내려놓기 완료!")
 
             # ============================================================
-            # Step 8. 추가 재료(Toppings) 확인 및 붓기
+            # Step 9. 추가 재료(Toppings) 확인 및 붓기
             # ============================================================
             print("\n============================================================")
-            print("Step 8. 추가 재료(Toppings) 확인 및 붓기")
+            print("Step 9. 추가 재료(Toppings) 확인 및 붓기")
             print("============================================================")
             
             # JSON 구조에서 topping_ids 파싱
@@ -419,10 +536,10 @@ def main(args=None):
 
 
             # ============================================================
-            # 🌟 Step 9. 소스 뿌리기 (Drizzle Sauce)
+            # 🌟 Step 10. 소스 뿌리기 (Drizzle Sauce)
             # ============================================================
             print("\n============================================================")
-            print("Step 9. 소스 뿌리기 (Drizzle Sauce)")
+            print("Step 10. 소스 뿌리기 (Drizzle Sauce)")
             print("============================================================")
             
             # JSON 구조에서 sauce_id 파싱 (ex: 'tomato_sauce')

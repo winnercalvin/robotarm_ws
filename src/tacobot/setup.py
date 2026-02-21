@@ -27,7 +27,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            # 'home = tacobot.home:main',
+            'test = tacobot.test:main',
             'action_server = tacobot.action_server:main', 
             'main_controller = tacobot.main_controller:main',
         ],
