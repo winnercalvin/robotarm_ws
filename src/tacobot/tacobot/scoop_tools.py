@@ -1,35 +1,21 @@
-# scoop_tools.py
+# tacobot/scoop_tools.py
 import time
 
-def scoop_action(p0_list, p1_list, p2_list, p3_list):
-    # 함수 안에서 import
-    from DSR_ROBOT2 import posx, posj, movec, movej, movel
-
-    print(">>> [Module] 스쿠핑 작업 시작 (Scooping)...", flush=True)
-
-    P0 = posj(*p0_list) # 시작 관절
-    P1 = posx(*p1_list) # 경유점
-    P2 = posx(*p2_list) # 목표점
-    P3 = posx(*p3_list) # 들어올리기
-
-    # 2. 시작 위치로 이동
-    movej(P0, vel=80, acc=70)
-    time.sleep(2.0) # 이동 대기
-
-    # 3. 반복 동작 (3회)
-    for i in range(3): 
-        print(f"   >>> [Scoop] Cycle {i+1}/3", flush=True)
+def scoop_action(p1, p2, p3, p4, p5, p6, p7, p8):
+    from DSR_ROBOT2 import movel, posx, set_velx, set_accx, DR_BASE
+    
+    print("   >>> [Scoop] 스쿱(Scooping) 동작 시작!", flush=True)
+    
+    # 속도 및 가속도 설정 (직교 공간)
+    set_velx(60, 30)
+    set_accx(100, 60)
+    
+    # 리스트로 묶어서 반복문으로 깔끔하게 처리
+    waypoints = [p1, p2, p3, p4, p5, p6, p7, p8]
+    
+    for i, wp in enumerate(waypoints):
+        # 배열을 posx 객체로 변환하여 직선 이동(movel)
+        movel(posx(wp), ref=DR_BASE)
+        # print(f"      - Point {i+1}/8 통과")
         
-        # P1 -> P2 원호 이동
-        movec(P1, P2, vel=120, acc=100)
-        time.sleep(1.5) # [추가] 원 그리는 시간 대기
-        
-        # P3 수직 상승
-        movel(P3, vel=100, acc=90)
-        time.sleep(1.0) # [추가] 들어올리는 시간 대기
-        
-        # P0 원위치 복귀
-        movej(P0, vel=100, acc=90)
-        time.sleep(1.5) # [추가] 복귀 시간 대기
-        
-    print(">>> [Module] 스쿠핑 완료", flush=True)
+    print("   >>> [Scoop] 스쿱 동작 완료!", flush=True)

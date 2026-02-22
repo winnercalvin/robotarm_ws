@@ -459,13 +459,12 @@ def main(args=None):
                 print("\n✅ 튀김트레이 내려놓기 완료!")
 
             # ============================================================
-            # Step 9. 추가 재료(Toppings) 확인 및 붓기
+            # Step 9. 추가 재료(Toppings) 전용 스쿠퍼 잡고 투입
             # ============================================================
             print("\n============================================================")
-            print("Step 9. 추가 재료(Toppings) 확인 및 붓기")
+            print("Step 9. 추가 재료(Toppings) 스쿱(Scoop)")
             print("============================================================")
             
-            # JSON 구조에서 topping_ids 파싱
             order_tasks = controller.current_order_data.get('tasks', [])
             if order_tasks:
                 topping_ids = order_tasks[0].get('topping_ids', [])
@@ -473,67 +472,179 @@ def main(args=None):
                 if not topping_ids:
                     print("   👉 추가 선택 재료가 없습니다. 바로 서빙으로 넘어갑니다.")
                 else:
-                    # 토핑이 여러 개면 개수만큼 반복!
+                    # --------------------------------------------------------
+                    # 9-A. 토핑 구역으로 공통 진입 (딱 한 번만 실행)
+                    # --------------------------------------------------------
+                    print("\n▶ [준비] 토핑 구역 공통 접근")
+                    
+                    pos_pre_1 = [2.28, 15.08, 73.07, -2.05, 69.63, -86.94]
+                    future = controller.send_task(pos_pre_1, task_type=0)
+                    rclpy.spin_until_future_complete(controller, future)
+                    time.sleep(0.5)
+
+                    pos_pre_2 = [0.0, 1.11, 76.85, 0.06, 101.96, -0.02]
+                    future = controller.send_task(pos_pre_2, task_type=0)
+                    rclpy.spin_until_future_complete(controller, future)
+                    time.sleep(0.5)
+
+                    # --------------------------------------------------------
+                    # 9-B. 각 재료별 독립 시퀀스 (잡기 -> 스쿱 -> 붓기 -> 반납)
+                    # --------------------------------------------------------
                     for topping in topping_ids:
-                        print(f"\n▶ [추가 재료] '{topping}' 용기 잡고 붓기 시퀀스 시작!")
+                        print(f"\n▶ [추가 재료] '{topping}' 전용 스쿠퍼 시퀀스 시작!")
                         
-                        # 🚨 [TODO] 재료별 좌표 세팅 (직접 티칭해서 값을 채워주세요!)
-                        if topping == 'tomato':
-                            pos_top_approach = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 토마토 통 안전 접근/놓기
-                            pos_top_grab     = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 토마토 통 잡기
-                            pos_top_pour_wp  = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 감자칩 용기 위 안전 경유지
-                            pos_top_pour     = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 토마토 붓기
+                        if topping == 'cabbage':
+                            # --- 1. 양배추 스쿠퍼 잡기 ---
+                            print("   >>> [1/4] 양배추 스쿠퍼 잡으러 이동 중...")
+                            pos_cab_appr = [-26.82, 18.03, 57.39, 0.23, 104.54, -26.75] # 위에서 맞추기
+                            pos_cab_grab = [-52.63, 44.38, 46.54, 27.91, 116.43, -46.02] # 잡는 위치
+                            pos_cab_out1 = [-51.41, 42.92, 46.46, 28.42, 117.79, -46.01] # 나가기 1
+                            pos_cab_out2 = [-46.16, 35.33, 51.53, 28.08, 118.82, -40.18] # 나가기 2
+                            
+                            future = controller.send_task(pos_cab_appr, task_type=0)
+                            rclpy.spin_until_future_complete(controller, future)
+                            time.sleep(0.5)
+                            
+                            future = controller.send_task(pos_cab_grab, task_type=1) # 🌟 Grip!
+                            rclpy.spin_until_future_complete(controller, future)
+                            time.sleep(1.0)
+                            
+                            future = controller.send_task(pos_cab_out1, task_type=0)
+                            rclpy.spin_until_future_complete(controller, future)
+                            time.sleep(0.5)
+                            
+                            future = controller.send_task(pos_cab_out2, task_type=0)
+                            rclpy.spin_until_future_complete(controller, future)
+                            time.sleep(0.5)
+
+                            # --- 2. 양배추 스쿱 동작 ---
+                            print("   >>> [2/4] 양배추 스쿱(Scoop) 동작 실행")
+                            cabbage_scoop_data = [
+                                419.65, -55.58, 264.27, 83.22, 150.94, 81.51,
+                                435.05, -172.38, 267.64, 46.01, 179.87, 46.39,
+                                439.9, -235.13, 266.77, 83.45, 157.49, 88.46,
+                                435.98, -246.13, 289.73, 79.46, 142.07, 82.45,
+                                440.46, -318.82, 223.4, 79.4, 151.28, 87.55,
+                                431.91, -333.83, 167.41, 111.38, -170.33, 115.49,
+                                431.89, -327.35, 182.09, 111.37, -170.33, 115.48,
+                                431.88, -152.38, 182.1, 111.35, -170.32, 115.47
+                            ]
+                            future = controller.send_task(cabbage_scoop_data, task_type=6)
+                            rclpy.spin_until_future_complete(controller, future)
+                            time.sleep(1.0)
+                            
+                            # --- 3. 용기에 붓기 ---
+                            print("   >>> [3/4] 감자칩 용기에 붓기 (Pour)")
+                            # 🚨 [TODO] 감자칩 용기 위 붓기 좌표 티칭 필요
+                            pos_pour_wp = [0.0, 0.0, 90.0, 0.0, 90.0, 0.0] 
+                            pos_pour_do = [0.0, 0.0, 90.0, 0.0, 90.0, 0.0]
+                            
+                            future = controller.send_task(pos_pour_wp, task_type=0)
+                            rclpy.spin_until_future_complete(controller, future)
+                            time.sleep(0.5)
+                            
+                            future = controller.send_task(pos_pour_do, task_type=4) # 🌟 Pour 2
+                            rclpy.spin_until_future_complete(controller, future)
+                            time.sleep(1.0)
+                            
+                            future = controller.send_task(pos_pour_wp, task_type=0)
+                            rclpy.spin_until_future_complete(controller, future)
+                            time.sleep(0.5)
+
+                            # --- 4. 스쿠퍼 반납 (역순) ---
+                            print("   >>> [4/4] 양배추 스쿠퍼 반납 중...")
+                            future = controller.send_task(pos_cab_out2, task_type=0)
+                            rclpy.spin_until_future_complete(controller, future)
+                            time.sleep(0.5)
+                            
+                            future = controller.send_task(pos_cab_out1, task_type=0)
+                            rclpy.spin_until_future_complete(controller, future)
+                            time.sleep(0.5)
+                            
+                            future = controller.send_task(pos_cab_grab, task_type=2) # 🌟 Release!
+                            rclpy.spin_until_future_complete(controller, future)
+                            time.sleep(1.0)
+                            
+                            future = controller.send_task(pos_cab_appr, task_type=0)
+                            rclpy.spin_until_future_complete(controller, future)
+                            time.sleep(0.5)
+                            
+                            future = controller.send_task(pos_pre_2, task_type=0) # 공통 대기 장소로 원복
+                            rclpy.spin_until_future_complete(controller, future)
+                            time.sleep(0.5)
+                            
+                            print("✅ 'cabbage' 시퀀스 완벽 종료!\n")
+
+                        elif topping == 'tomato':
+                            print("   >>> [TODO] 토마토 전용 스쿠퍼 로직 채워넣기!")
+                            # 위 양배추 로직을 복사해서 변수명(pos_tom_appr 등)과 좌표만 바꾸시면 됩니다.
+                            pass
+                            
                         elif topping == 'onion':
-                            pos_top_approach = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 양파 통 안전 접근/놓기
-                            pos_top_grab     = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 양파 통 잡기
-                            pos_top_pour_wp  = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 감자칩 용기 위 안전 경유지
-                            pos_top_pour     = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 양파 붓기
-                        elif topping == 'cabbage':
-                            pos_top_approach = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 양배추 통 안전 접근/놓기
-                            pos_top_grab     = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 양배추 통 잡기
-                            pos_top_pour_wp  = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 감자칩 용기 위 안전 경유지
-                            pos_top_pour     = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 양배추 붓기
+                            print("   >>> [TODO] 양파 전용 스쿠퍼 로직 채워넣기!")
+                            # 위 양배추 로직을 복사해서 변수명(pos_oni_appr 등)과 좌표만 바꾸시면 됩니다.
+                            pass
+                            
                         else:
                             print(f"⚠️ '{topping}'은(는) 알 수 없는 재료입니다. 패스합니다.")
                             continue
                             
-                        # 8-1. 재료 통 접근 (그리퍼 열기)
-                        future = controller.send_task(pos_top_approach, task_type=2)
+                        # 스쿱(Task 6) 전송 - 48개 데이터를 한 번에 서버로 쏜다!
+                        future = controller.send_task(scoop_data, task_type=6)
                         rclpy.spin_until_future_complete(controller, future)
                         future.result().get_result_async()
+                        
+                        print(f"✅ '{topping}' 스쿱 완료!\n")
                         time.sleep(1.0)
-                        
-                        # 8-2. 재료 통 잡기
-                        future = controller.send_task(pos_top_grab, task_type=1)
-                        rclpy.spin_until_future_complete(controller, future)
-                        future.result().get_result_async()
-                        time.sleep(2.0)
-                        
-                        # 8-3. 붓기 경유지 이동
-                        future = controller.send_task(pos_top_pour_wp, task_type=0)
-                        rclpy.spin_until_future_complete(controller, future)
-                        future.result().get_result_async()
-                        time.sleep(1.0)
-                        
-                        # 8-4. 재료 붓기 (최적화 붓기 활용)
-                        future = controller.send_task(pos_top_pour, task_type=3)
-                        rclpy.spin_until_future_complete(controller, future)
-                        future.result().get_result_async()
-                        time.sleep(2.0)
-                        
-                        # 8-5. 다시 제자리 경유지 이동
-                        future = controller.send_task(pos_top_approach, task_type=0)
-                        rclpy.spin_until_future_complete(controller, future)
-                        future.result().get_result_async()
-                        time.sleep(1.0)
-                        
-                        # 8-6. 재료 통 제자리에 내려놓기
-                        future = controller.send_task(pos_top_grab, task_type=2)
-                        rclpy.spin_until_future_complete(controller, future)
-                        future.result().get_result_async()
-                        print(f"✅ '{topping}' 투입 완료!\n")
-                        time.sleep(2.0)
 
+                        # --------------------------------------------------------
+                        # 9-3. 스쿱 끝난 후 붓기
+                        # --------------------------------------------------------
+
+                        print(f"\n▶ [추가 재료] '{topping}' 용기에 붓기 (Pour)!")
+                        
+                        # 🚨 [TODO] 감자칩 용기 위로 이동하는 붓기 좌표를 티칭해주세요!
+                        pos_topping_pour_wp = [0.0, 0.0, 90.0, 0.0, 90.0, 0.0]  # 용기 위 안전 경유지
+                        pos_topping_pour    = [0.0, 0.0, 90.0, 0.0, 90.0, 0.0]  # 실제 붓기 동작을 시작할 위치
+                        
+                        # 1. 용기 위 안전 경유지로 이동 (단순 이동 task=0)
+                        future = controller.send_task(pos_topping_pour_wp, task_type=0)
+                        rclpy.spin_until_future_complete(controller, future)
+                        future.result().get_result_async()
+                        time.sleep(1.0)
+                        
+                        # 2. 붓기 실행 (아까 추가한 새로운 붓기 각도 task=4 활용!)
+                        future = controller.send_task(pos_topping_pour, task_type=4)
+                        rclpy.spin_until_future_complete(controller, future)
+                        future.result().get_result_async()
+                        print(f"✅ '{topping}' 붓기 완료!")
+                        time.sleep(2.0)
+                        
+                        # 3. 다시 안전 경유지로 빠져나오기 (단순 이동 task=0)
+                        future = controller.send_task(pos_topping_pour_wp, task_type=0)
+                        rclpy.spin_until_future_complete(controller, future)
+                        future.result().get_result_async()
+                        time.sleep(1.0)
+                        
+                    # --------------------------------------------------------
+                    # 9-4. 스쿱 끝난 후 스쿠퍼 제자리에 놓기 (Release)
+                    # --------------------------------------------------------
+                    print("\n▶ [마무리] 스쿠퍼 제자리에 내려놓기 (역순 이동)")
+                    # 위에서 빠져나왔던 좌표를 역순으로 타고 들어가서 놓습니다.
+                    future = controller.send_task(pos_scooper_4, task_type=0)
+                    rclpy.spin_until_future_complete(controller, future)
+                    time.sleep(0.5)
+                    
+                    # 3번(잡았던 위치)으로 다시 들어가면서 이번엔 task=2 (놓기) 실행
+                    future = controller.send_task(pos_scooper_3, task_type=2)
+                    rclpy.spin_until_future_complete(controller, future)
+                    time.sleep(1.0)
+                    
+                    # 1번(안전 위치)으로 다시 빠져나오기
+                    future = controller.send_task(pos_scooper_1, task_type=0)
+                    rclpy.spin_until_future_complete(controller, future)
+                    print("✅ 스쿠퍼 반납 완료!")
+                    time.sleep(1.0)
 
             # ============================================================
             # 🌟 Step 10. 소스 뿌리기 (Drizzle Sauce)

@@ -183,16 +183,20 @@ def execute_callback(goal_handle):
             shake_tools.shake_action(direction="y")
 
         # ---------------------------------------------------------
-        # Case B: 스쿱 동작 (Task 6) - [기존 5에서 6으로 변경]
+        # Case B: 스쿱 동작 (Task 6) - 8개의 직교 좌표(posx)
         # ---------------------------------------------------------
         elif task_type == 6:
-            if len(data) == 24:
-                print("   >>> [Data] 스쿱 좌표 데이터 수신 완료", flush=True)
-                p0, p1, p2, p3 = data[0:6], data[6:12], data[12:18], data[18:24]
-                scoop_tools.scoop_action(p0, p1, p2, p3)
+            if len(data) == 48:
+                print("   >>> [Data] 스쿱 좌표 데이터(8개 포인트) 수신 완료", flush=True)
+                # 48개의 데이터를 6개씩 8덩어리로 쪼갭니다.
+                p1, p2, p3, p4 = data[0:6], data[6:12], data[12:18], data[18:24]
+                p5, p6, p7, p8 = data[24:30], data[30:36], data[36:42], data[42:48]
+                
+                # scoop_tools로 넘겨 실행
+                scoop_tools.scoop_action(p1, p2, p3, p4, p5, p6, p7, p8)
             else:
                 goal_handle.abort()
-                return RobotTask.Result(success=False, message="Data Length Error")
+                return RobotTask.Result(success=False, message=f"Data Length Error: expected 48, got {len(data)}")
 
         # ---------------------------------------------------------
         # Case E: 기름 털기 (Task 7) - [기존 6에서 7로 변경]
