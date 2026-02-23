@@ -18,8 +18,8 @@ def drizzle_action():
     
     # 설정값: 총 4번 꺾고, 앞으로 200mm 전진하며, 좌우로 40mm씩 움직임
     steps = 4
-    y_step = 200.0 / steps  # 한 번에 전진할 Y축 거리 (50mm)
-    x_amp = 40.0            # 좌우 X축 진폭 (40mm)
+    y_step = 100.0 / steps  # 한 번에 전진할 Y축 거리 (50mm)
+    x_amp = 20.0            # 좌우 X축 진폭 (40mm)
     
     for i in range(1, steps + 1):
         wp = list(current_pos)

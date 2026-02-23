@@ -26,3 +26,11 @@ def grip():
     set_gripper_signal(ON, OFF, OFF)
     wait(1.5) 
     print(">>> [Module] Grip 완료")
+
+def sauce_grip():
+    """소스통 전용 3비트(111) 그립"""
+    # 🚨 [주의] 1, 2, 3은 예시 포트 번호입니다. 실제 로봇에 연결된 포트 번호로 수정하세요!
+    set_digital_output(1, 1)
+    set_digital_output(2, 1)
+    set_digital_output(3, 1)
+    print("   >>> [Grip] 소스통 3비트(111) 그립 완료!", flush=True)

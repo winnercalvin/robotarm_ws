@@ -119,17 +119,18 @@ def execute_callback(goal_handle):
         goal_handle.publish_feedback(RobotTask.Feedback(status=f"Processing..."))
 
         # ---------------------------------------------------------
-        # Case A: 일반 이동 및 동작 (Move / Grip / Drop / Pour)
+        # Case A: 일반 이동 및 동작 (0:Move, 1:Grip, 2:Drop, 3:Pour, 9:SauceGrip)
         # ---------------------------------------------------------
-        if task_type in [0, 1, 2, 3]: 
+        if task_type in [0, 1, 2, 3, 9]: 
             v, a = 50, 50
             if task_type == 0: v, a = 30, 30   
             elif task_type == 1: v, a = 30, 20 
             elif task_type == 2: v, a = 20, 20 
             elif task_type == 3: v, a = 50, 40 
+            elif task_type == 9: v, a = 30, 20 # 소스 잡으러 갈 때 속도
 
-            # 1. Grip일 경우 Release 먼저 수행
-            if task_type == 1:
+            # 1. Grip일 경우 출발 전 Release 먼저 수행 (일반 그립, 소스 그립 모두)
+            if task_type in [1, 9]:
                 print("   >>> [Module] Release 실행", flush=True)
                 grab_tools.release()
                 time.sleep(0.5)
@@ -152,7 +153,7 @@ def execute_callback(goal_handle):
                 move_and_wait(data, v, a)
                 print("   >>> [Wait] 이동 완료 확인됨!", flush=True)
 
-            # 3. 도착 후 동작 수행 (🌟 [핵심 수정 3] 중복 이동 코드 제거 및 깔끔하게 정리)
+            # 3. 도착 후 동작 수행
             if task_type == 0:
                 print("   >>> [Module] 단순 이동(경유지) 완료", flush=True)
             elif task_type == 1:   
@@ -165,6 +166,9 @@ def execute_callback(goal_handle):
             elif task_type == 3: 
                 print("   >>> [Module] Pour(최적화 붓기) 실행", flush=True)
                 pour_tools.pour_action(move_and_wait)
+            elif task_type == 9:
+                print("   >>> [Module] Sauce Grip(111) 실행", flush=True)
+                grab_tools.sauce_grip()
 
         # ---------------------------------------------------------
         # Case C-1: 쉐이크 동작 (Task 4) - Z축 위아래
@@ -183,20 +187,22 @@ def execute_callback(goal_handle):
             shake_tools.shake_action(direction="y")
 
         # ---------------------------------------------------------
-        # Case B: 스쿱 동작 (Task 6) - 8개의 직교 좌표(posx)
+        # Case B: 스쿱 동작 (Task 6) - 9개의 직교 좌표(posx)
         # ---------------------------------------------------------
         elif task_type == 6:
-            if len(data) == 48:
-                print("   >>> [Data] 스쿱 좌표 데이터(8개 포인트) 수신 완료", flush=True)
-                # 48개의 데이터를 6개씩 8덩어리로 쪼갭니다.
+            if len(data) == 54: # 🌟 48에서 54로 변경 (9개 * 6 = 54)
+                print("   >>> [Data] 스쿱 좌표 데이터(9개 포인트) 수신 완료", flush=True)
+                
+                # 54개의 데이터를 6개씩 9덩어리로 쪼갭니다.
                 p1, p2, p3, p4 = data[0:6], data[6:12], data[12:18], data[18:24]
                 p5, p6, p7, p8 = data[24:30], data[30:36], data[36:42], data[42:48]
+                p9 = data[48:54] # 🌟 9번째 좌표 조각 추가
                 
-                # scoop_tools로 넘겨 실행
-                scoop_tools.scoop_action(p1, p2, p3, p4, p5, p6, p7, p8)
+                # scoop_tools로 넘겨 실행 (p9 추가)
+                scoop_tools.scoop_action(p1, p2, p3, p4, p5, p6, p7, p8, p9)
             else:
                 goal_handle.abort()
-                return RobotTask.Result(success=False, message=f"Data Length Error: expected 48, got {len(data)}")
+                return RobotTask.Result(success=False, message=f"Data Length Error: expected 54, got {len(data)}")
 
         # ---------------------------------------------------------
         # Case E: 기름 털기 (Task 7) - [기존 6에서 7로 변경]
@@ -218,13 +224,48 @@ def execute_callback(goal_handle):
             move_and_wait(data, 900, 900)
             print("   >>> [Module] 지그재그 소스 뿌리기 실행", flush=True)
             drizzle_tools.drizzle_action()
+
+
+        # =========================================================
+        # 커스텀 5단계 붓기 + 쉐이크 중첩 (Task 10)
+        # =========================================================
+        elif task_type == 10:
+            if len(data) == 30: # 좌표 5개 x 데이터 6개 = 30개
+                from DSR_ROBOT2 import move_periodic, DR_TOOL
+                print("   >>> [Pour] 5단계 커스텀 붓기 시작!", flush=True)
+                
+                # 데이터 쪼개기
+                p1, p2, p3 = data[0:6], data[6:12], data[12:18]
+                p4, p5 = data[18:24], data[24:30]
+                
+                # 1~4번 좌표로 순차 이동
+                move_and_wait(p1, 50, 40)
+                move_and_wait(p2, 50, 40)
+                move_and_wait(p3, 50, 40)
+                move_and_wait(p4, 50, 40)
+                
+                # 5번 좌표 진입 전 흔들기(Periodic) 켜기!
+                print("   >>> [Shake] 5번 좌표 진입하며 흔들기 시작!", flush=True)
+                move_periodic(
+                    amp=[10, 0, 0, 0, 0, 0], # (참고: [X,Y,Z, Rx,Ry,Rz] 이므로 현재 X축 방향 진동입니다)
+                    period=0.4,
+                    atime=0.2,
+                    repeat=5,
+                    ref=DR_TOOL
+                )
+                
+                # 흔들기가 켜진 상태로 5번 좌표로 진입 (모션 중첩 발생!)
+                move_and_wait(p5, 30, 20) # 붓기 마지막은 살짝 부드럽게 속도 30으로 세팅
+            else:
+                goal_handle.abort()
+                return RobotTask.Result(success=False, message="Data Length Error")
+        
         # 성공 처리
         print("🎉 [Success] 작업 완료 신호 전송", flush=True)
         goal_handle.succeed()
         time.sleep(0.5) 
 
-        return RobotTask.Result(success=True, message="Success")
-    
+        return RobotTask.Result(success=True, message="Success")    
 
     except Exception as e:
         print(f"!!!! 에러 발생 !!!! : {e}", flush=True)

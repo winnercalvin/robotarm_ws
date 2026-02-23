@@ -11,7 +11,7 @@ def drain_action(p1_list, p2_list):
     P2 = posx(*p2_list)
 
     # 3회 반복 털기
-    for i in range(3):
+    for i in range(2):
         print(f"   >>> [Drain] Cycle {i+1}/3", flush=True)
         
         # P1으로 이동
