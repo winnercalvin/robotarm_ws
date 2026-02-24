@@ -217,13 +217,17 @@ def execute_callback(goal_handle):
                 return RobotTask.Result(success=False, message="Data Length Error")
 
         # ---------------------------------------------------------
-        # Case F: 소스 뿌리기 (Task 8) - [기존 7에서 8로 변경]
+        # Case F: 소스 뿌리기 (Task 8)
         # ---------------------------------------------------------
         elif task_type == 8:
-            print("   >>> [Task] 소스 뿌리기 준비 완료", flush=True)
-            move_and_wait(data, 900, 900)
-            print("   >>> [Module] 지그재그 소스 뿌리기 실행", flush=True)
-            drizzle_tools.drizzle_action()
+            print("   >>> [Task 8] 소스 뿌리기 시작!", flush=True)
+            # data는 [x1, y1, x2, y2...] 형태의 리스트입니다.
+            if len(data) > 0:
+                print(f"   >>> [Module] 커스텀 그리기 모듈 호출 (수신된 데이터 개수: {len(data)})", flush=True)
+                drizzle_tools.custom_drizzle(data)
+            else:
+                print("   >>> [Module] 데이터 없음 -> 기본 지그재그 그리기 호출", flush=True)
+                drizzle_tools.auto_zigzag_drizzle()
 
 
         # =========================================================

@@ -97,101 +97,118 @@ def main(args=None):
             
             controller.order_received = False
 
-            # 여기서부터 기존 시나리오 쭈욱 진행
-            print("\n=== [Scenario] 🍟 감자튀김 요리 프로세스 시작 ===")
+            # 🌟 [수정 1] JSON 데이터에서 현재 주문의 첫 번째 task 정보 추출
+            order_tasks = controller.current_order_data.get('tasks', [])
+            if not order_tasks:
+                print("❌ 에러: 주문 데이터에 'tasks' 배열이 없습니다.")
+                continue
+
+            current_task = order_tasks[0]
+            chip_id = current_task.get('chip_id', 'basic') # 값이 없으면 'basic'으로 간주
+
+            # 🌟 [수정 2] chip_id에 따라 반복 횟수 결정 (double이면 2번, 아니면 1번)
+            loop_count = 2 if chip_id == 'double' else 1
+
+            print(f"\n=== [Scenario] 🍟 감자튀김 요리 프로세스 시작 (사이즈: {chip_id.upper()}) ===")
 
             # ============================================================
-            # Step 1. 소분된 용기를 잡는다 (Task 1)
+            # 🌟 [수정 3] Step 1 ~ Step 3를 loop_count 만큼 반복
             # ============================================================
-            controller.publish_status("용기 집는 중입니다.")
-            print("\n▶ Step 1-1: 용기 근처(안전 경유지)로 이동하며 그리퍼 열기")
-            
-            # [좌표 수정 필요] 용기 바로 위 또는 앞의 안전한 '경유지' 좌표를 넣으세요!
-            pos_approach = [50.66, 30.68, 51.24, 0.21, 97.43, 0.04] 
-            
-            # task_type=2 (놓기)를 활용: 이동 후 손을 미리 엶
-            future = controller.send_task(pos_approach, task_type=2)
-            if future is None:
-                print("❌ 명령 전송 실패: 서버가 응답하지 않습니다.")
-                break
-            rclpy.spin_until_future_complete(controller, future)
-            
-            goal_handle = future.result()
-            if goal_handle.accepted:
-                res_future = goal_handle.get_result_async()
-                rclpy.spin_until_future_complete(controller, res_future)
-                print("✅ 경유지 도착 및 그리퍼 오픈 완료!")
-            
-            time.sleep(0.3) # 다음 동작 전 1초 대기
+            for i in range(loop_count):
+                current_turn = i + 1
+                print(f"\n" + "-"*40)
+                print(f"🔄 감자튀김 투입 사이클 {current_turn} / {loop_count}")
+                print("-"*40)
 
-            print("\n▶ Step 1-2: 소분된 용기를 잡는다")
-            pos_scooper = [42.62, 49.44, 68.33, 4.33, 66.55, -10.6]
-            future = controller.send_task(pos_scooper, task_type=1)
-            if future is None:
-                print("❌ 명령 전송 실패: 서버가 응답하지 않습니다.")
-                break
-            rclpy.spin_until_future_complete(controller, future)
-            
-            goal_handle = future.result()
-            if goal_handle.accepted:
-                res_future = goal_handle.get_result_async()
-                rclpy.spin_until_future_complete(controller, res_future)
-                print("✅ 잡기 완료!\n")
-            
-            time.sleep(0.3)
+                # ------------------------------------------------------------
+                # Step 1. 소분된 용기를 잡는다 (Task 1)
+                # ------------------------------------------------------------
+                controller.publish_status(f"[{current_turn}/{loop_count}] 번째 용기 집는 중입니다.")
+                print(f"\n▶ Step 1-1: {current_turn}번째 용기 근처(안전 경유지)로 이동하며 그리퍼 열기")
+                
+                pos_approach = [50.66, 30.68, 51.24, 0.21, 97.43, 0.04] 
+                pos_scooper = [42.62, 49.44, 68.33, 4.33, 66.55, -10.6]
 
-            # ============================================================
-            # Step 2. 용기에 담긴 감자를 튀김트레이에 붓는다 (Task 3)
-            # ============================================================
-            controller.publish_status("감자를 튀김 트레이에 붓는 중입니다.")
-            print("\n▶ Step 2: 튀김트레이 경유지를 거쳐 붓기 위치로 이동 (블렌딩)")
-            
-            # 경유지
-            pos_waypoint = [43.08, 31.77, 29.97, 3.24, 114.69, -8.73] 
-            # 최종 붓기 도착지
-            pos_pour_potato = [-20.41, 30.97, 47.87, 27.2, 94.64, -19.27] 
-            
-            # 🌟 두 좌표를 합쳐서(12개 데이터) 한 번에 전송합니다!
-            combined_pour_data = pos_waypoint + pos_pour_potato
-            
-            future = controller.send_task(combined_pour_data, task_type=3)
-            rclpy.spin_until_future_complete(controller, future)
+                future = controller.send_task(pos_approach, task_type=2)
+                rclpy.spin_until_future_complete(controller, future)
+                
+                goal_handle = future.result()
+                if goal_handle.accepted:
+                    res_future = goal_handle.get_result_async()
+                    rclpy.spin_until_future_complete(controller, res_future)
+                    print(f"✅ {current_turn}번째 경유지 도착 및 그리퍼 오픈 완료!")
+                
+                time.sleep(0.3)
 
-            goal_handle = future.result()
-            if goal_handle.accepted:
-                res_future = goal_handle.get_result_async()
-                rclpy.spin_until_future_complete(controller, res_future)
-                print("✅ 멈춤 없는 스무스한 이동 및 감자 붓기 완료!")
-            time.sleep(2.0)
+                print(f"\n▶ Step 1-2: {current_turn}번째 소분된 용기를 잡는다")
+                future = controller.send_task(pos_scooper, task_type=1)
+                rclpy.spin_until_future_complete(controller, future)
+                
+                goal_handle = future.result()
+                if goal_handle.accepted:
+                    res_future = goal_handle.get_result_async()
+                    rclpy.spin_until_future_complete(controller, res_future)
+                    print(f"✅ {current_turn}번째 용기 잡기 완료!\n")
+                
+                time.sleep(0.3)
 
-            # ============================================================
-            # Step 3. 다 부은 빈 용기를 지정된 위치에 놓는다 (Task 2)
-            # ============================================================
-            controller.publish_status("잠시만 기다려주세요!")
-            print("\n▶ Step 3-1: 튀김트레이 위 안전 경유지로 이동")
-            # 목표 위치보다 위쪽이나 안전한 각도를 임의로 설정 (값은 실제 로봇에 맞게 수정)
-            pos_waypoint = [25.82, -15.82, 87.7, 11.99, 92.98, -8.73] 
-            future_wp = controller.send_task(pos_waypoint, task_type=0) # 단순 이동(0)
-            rclpy.spin_until_future_complete(controller, future_wp)
+                # ------------------------------------------------------------
+                # Step 2. 용기에 담긴 감자를 튀김트레이에 붓는다 (Task 3)
+                # ------------------------------------------------------------
+                controller.publish_status(f"[{current_turn}/{loop_count}] 번째 감자를 튀김 트레이에 붓는 중입니다.")
+                print(f"\n▶ Step 2: 튀김트레이 경유지를 거쳐 붓기 위치로 이동 (블렌딩)")
+                
+                # 붓는 위치는 동일하므로 공통 좌표 사용
+                pos_waypoint_pour = [43.08, 31.77, 29.97, 3.24, 114.69, -8.73] 
+                pos_pour_potato = [-20.41, 30.97, 47.87, 27.2, 94.64, -19.27] 
+                combined_pour_data = pos_waypoint_pour + pos_pour_potato
+                
+                future = controller.send_task(combined_pour_data, task_type=3)
+                rclpy.spin_until_future_complete(controller, future)
 
-            wp_handle = future_wp.result()
-            if wp_handle.accepted:
-                wp_res_future = wp_handle.get_result_async()
-                rclpy.spin_until_future_complete(controller, wp_res_future)
-                print("✅ 경유지 도착 완료!")
+                goal_handle = future.result()
+                if goal_handle.accepted:
+                    res_future = goal_handle.get_result_async()
+                    rclpy.spin_until_future_complete(controller, res_future)
+                    print("✅ 멈춤 없는 스무스한 이동 및 감자 붓기 완료!")
+                time.sleep(2.0)
 
-            time.sleep(1.0) # 안정화 대기
-            print("\n▶ Step 3-2: 빈 용기를 지정된 위치에 내려놓는다 (놓기)")
-            pos_place_container = [13.66, -5.07, 115.55, 2.69, 67.45, -31.08] 
-            future = controller.send_task(pos_place_container, task_type=2)
-            rclpy.spin_until_future_complete(controller, future)
+                # ------------------------------------------------------------
+                # Step 3. 다 부은 빈 용기를 지정된 위치에 놓는다 (Task 2)
+                # ------------------------------------------------------------
+                controller.publish_status(f"[{current_turn}/{loop_count}] 빈 용기를 반납합니다.")
+                print(f"\n▶ Step 3-1: 튀김트레이 위 안전 경유지로 이동")
+                
+                if current_turn == 1:
+                    # [1번째 빈 용기 반납 좌표] (기존 좌표)
+                    pos_waypoint_drop = [25.82, -15.82, 87.7, 11.99, 92.98, -8.73] 
+                    pos_place_container = [13.66, -5.07, 115.55, 2.69, 67.45, -31.08] 
+                else:
+                    # 🚨 [2번째 빈 용기 반납 좌표] (TODO: 두 번째 용기 놓을 곳을 새로 티칭해서 넣어야 합니다!)
+                    pos_waypoint_drop = [0.0, 0.0, 90.0, 0.0, 90.0, 0.0] 
+                    pos_place_container = [0.0, 0.0, 90.0, 0.0, 90.0, 0.0] 
 
-            goal_handle = future.result()
-            if goal_handle.accepted:
-                res_future = goal_handle.get_result_async()
-                rclpy.spin_until_future_complete(controller, res_future)
-                print("✅ 용기 내려놓기 완료!")
-            time.sleep(2.0)
+                future_wp = controller.send_task(pos_waypoint_drop, task_type=0)
+                rclpy.spin_until_future_complete(controller, future_wp)
+
+                wp_handle = future_wp.result()
+                if wp_handle.accepted:
+                    wp_res_future = wp_handle.get_result_async()
+                    rclpy.spin_until_future_complete(controller, wp_res_future)
+                    print(f"✅ {current_turn}번째 놓기 경유지 도착 완료!")
+
+                time.sleep(1.0) 
+                
+                print(f"\n▶ Step 3-2: {current_turn}번째 빈 용기를 지정된 위치에 내려놓는다")
+                future = controller.send_task(pos_place_container, task_type=2)
+                rclpy.spin_until_future_complete(controller, future)
+
+                goal_handle = future.result()
+                if goal_handle.accepted:
+                    res_future = goal_handle.get_result_async()
+                    rclpy.spin_until_future_complete(controller, res_future)
+                    print(f"✅ {current_turn}번째 용기 내려놓기 완료!")
+                time.sleep(2.0)
 
             # ============================================================
             # Step 4. 튀김트레이를 흔든다 (Task 4)
@@ -227,7 +244,7 @@ def main(args=None):
 
             print("\n▶ Step 4-3")
             # 목표 위치보다 위쪽이나 안전한 각도를 임의로 설정 (값은 실제 로봇에 맞게 수정)
-            pos_waypoint = [1.76, 24.14, 67.56, -0.66, 85.16, -87.34] 
+            pos_waypoint = [2.51, 24.47, 67.4, -1.07, 83.89, -84.59] 
             future_wp = controller.send_task(pos_waypoint, task_type=1) 
             rclpy.spin_until_future_complete(controller, future_wp)
 
@@ -365,7 +382,7 @@ def main(args=None):
 
             print("\n▶ Step 6-2")
             # 목표 위치보다 위쪽이나 안전한 각도를 임의로 설정 (값은 실제 로봇에 맞게 수정)
-            pos_waypoint = [2.15, 18.87, 57.06, -2.26, 89.04, -87.31] 
+            pos_waypoint = [2.15, 19.66, 53.18, -2.26, 92.13, -87.44] 
             future_wp = controller.send_task(pos_waypoint, task_type=4) 
             rclpy.spin_until_future_complete(controller, future_wp)
 
@@ -480,21 +497,17 @@ def main(args=None):
             order_tasks = controller.current_order_data.get('tasks', [])
             if order_tasks:
                 topping_ids = order_tasks[0].get('topping_ids', [])
+                print("\n▶ [준비] 안전 구역 공통 접근")
+                pos_pre_1 = [2.28, 15.08, 73.07, -2.05, 69.63, -86.94]
+                pos_pre_2 = [0.0, 1.11, 76.85, 0.06, 101.96, -0.02]
+                
+                run_task_sync(pos_pre_1, 0)
+                run_task_sync(pos_pre_2, 0)
                 
                 if not topping_ids:
                     controller.publish_status("추가 토핑 선택이 없으므로 소스 확인으로 넘어갑니다.")
                     print("   👉 추가 선택 재료가 없습니다. 바로 서빙으로 넘어갑니다.")
                 else:
-                    # --------------------------------------------------------
-                    # 9-A. 토핑 구역으로 공통 진입 (딱 한 번만 실행)
-                    # --------------------------------------------------------
-                    print("\n▶ [준비] 토핑 구역 공통 접근")
-                    pos_pre_1 = [2.28, 15.08, 73.07, -2.05, 69.63, -86.94]
-                    pos_pre_2 = [0.0, 1.11, 76.85, 0.06, 101.96, -0.02]
-                    
-                    run_task_sync(pos_pre_1, 0)
-                    run_task_sync(pos_pre_2, 0)
-
                     # --------------------------------------------------------
                     # 9-B. 각 재료별 독립 시퀀스 (잡기 -> 스쿱 -> 붓기 -> 반납)
                     # --------------------------------------------------------
@@ -523,10 +536,10 @@ def main(args=None):
                                 435.05, -172.38, 267.64, 46.01, 179.87, 46.39,
                                 439.9, -235.13, 266.77, 83.45, 157.49, 88.46,
                                 435.98, -246.13, 289.73, 79.46, 142.07, 82.45,
-                                440.46, -318.82, 223.4, 79.4, 151.28, 87.55,
-                                431.91, -333.83, 167.41, 111.38, -170.33, 115.49,
+                                440.46, -318.82, 232.56, 79.4, 151.28, 87.55,
+                                431.9, -333.83, 176.44, 111.37, -170.33, 115.48,
                                 431.89, -327.35, 182.09, 111.37, -170.33, 115.48,
-                                431.88, -327.37, 196.04, 111.35, -170.32, 115.47,
+                                431.89, -333.89, 192.02, 111.37, -170.33, 115.49,
                                 431.89, -195.27, 196.06, 111.36, -170.32, 115.48
                             ]
                             run_task_sync(cabbage_scoop_data, 6, wait_time=1.0)
@@ -576,8 +589,8 @@ def main(args=None):
                                 358.45, -172.38, 267.64, 46.01, 179.87, 46.39,
                                 363.3, -235.13, 266.77, 83.45, 157.49, 88.46,
                                 359.38, -246.13, 289.73, 79.46, 142.07, 82.45,
-                                363.86, -318.82, 223.4, 79.4, 151.28, 87.55,
-                                355.31, -333.83, 167.41, 111.38, -170.33, 115.49,
+                                363.88, -318.82, 229.78, 79.4, 151.28, 87.55,
+                                355.31, -333.83, 175.59, 111.38, -170.33, 115.49,
                                 355.29, -327.35, 186.83, 111.37, -170.33, 115.48,
                                 355.28, -152.38, 186.83, 111.35, -170.32, 115.47,
                                 355.28, -20.28, 182.1, 111.35, -170.32, 115.47
@@ -626,8 +639,8 @@ def main(args=None):
                                 286.35, -172.38, 267.64, 46.01, 179.87, 46.39,
                                 291.2, -235.13, 266.77, 83.45, 157.49, 88.46,
                                 287.28, -246.13, 289.73, 79.46, 142.07, 82.45,
-                                287.27, -318.82, 227.84, 79.4, 151.28, 87.55,
-                                287.01, -333.83, 172.21, 111.38, -170.33, 115.49,
+                                284.82, -318.82, 227.84, 79.4, 151.28, 87.55,
+                                278.07, -333.83, 173.1, 111.38, -170.33, 115.49,
                                 287.01, -333.82, 184.4, 111.38, -170.33, 115.49,
                                 281.57, -321.11, 191.61, 111.37, -170.33, 115.48,
                                 281.56, -199.76, 191.63, 111.38, -170.33, 115.48
@@ -659,15 +672,46 @@ def main(args=None):
                             continue
 
             # ============================================================
-            # 🌟 Step 10. 소스 뿌리기 (Drizzle Sauce)
+            # 🌟 Step 10. 서빙 및 소스 뿌리기 퍼포먼스 (마무리)
             # ============================================================
+            controller.publish_status("서빙존으로 용기를 이동중입니다.") 
             print("\n============================================================")
-            print("Step 10. 소스 뿌리기 (Drizzle Sauce)")
+            print("Step 10. 완성된 감자칩 서빙 및 소스 뿌리기")
             print("============================================================")
+
+            # --------------------------------------------------------
+            # 10-A. 먼저 손님 앞(서빙 위치)으로 감자칩 배달
+            # --------------------------------------------------------
+            print("\n▶ [서빙] 완성된 용기를 서빙 존으로 이동")
+            pos_serve_1_grip = [12.6, -7.32, 120.14, 2.77, 65.15, -31.92]   # 1번: 잡기
+            pos_serve_2_wp   = [9.71, -5.27, 61.94, 3.29, 121.23, -31.84]   # 2번: 이동
+            pos_serve_3_wp   = [-65.04, -31.98, 89.65, 1.96, 111.93, -31.84]# 3번: 이동
+            pos_serve_4_wp   = [-88.83, -14.95, 91.82, -7.37, 102.0, -31.84]# 4번: 이동
+            pos_serve_5_drop = [-95.53, 21.63, 72.16, 2.1, 82.41, -20.47]  # 5번: 놓기
+
+            print("   >>> 1) 완성된 용기 잡기 (Grip)")
+            run_task_sync(pos_serve_1_grip, 1, wait_time=1.0)
+
+            print("   >>> 2) 서빙 구역으로 이동 중...")
+            run_task_sync(pos_serve_2_wp, 0)
+            run_task_sync(pos_serve_3_wp, 0)
+            run_task_sync(pos_serve_4_wp, 0)
+
+            print("   >>> 3) 고객 앞 서빙 위치에 용기 내려놓기 (Drop)")
+            run_task_sync(pos_serve_5_drop, 2, wait_time=1.0)
             
+            # 서빙 후 빈손으로 일단 안전하게 위로 후퇴 (소스 잡으러 가기 위함)
+            print("   >>> 4) 용기 내려놓고 안전 구역으로 후퇴")
+            run_task_sync(pos_serve_4_wp, 0)
+            run_task_sync(pos_serve_3_wp, 0)
+
+            # --------------------------------------------------------
+            # 10-B. 서빙된 용기 위에서 소스 뿌리기 퍼포먼스
+            # --------------------------------------------------------
+            controller.publish_status("소스 뿌리기를 시작합니다.") 
             if order_tasks:
                 sauce_id = order_tasks[0].get('sauce_id', None)
-                draw_path = order_tasks[0].get('draw_path', None) # JSON에서 path 파싱
+                draw_path = order_tasks[0].get('draw_path', None)
 
                 if sauce_id == 'mustard':
                     controller.publish_status("머스타드 뿌리는 중입니다")
@@ -675,106 +719,147 @@ def main(args=None):
                     controller.publish_status("케찹 뿌리는 중입니다")
                 
                 if not sauce_id:
-                    print("   👉 선택된 소스가 없습니다. 바로 서빙으로 넘어갑니다.")
+                    print("   👉 선택된 소스가 없습니다. 서빙을 완료합니다.")
                 else:
                     print(f"\n▶ [소스] '{sauce_id}' 용기 잡고 뿌리기 시퀀스 시작!")
                     
                     if sauce_id == 'tomato_sauce':
-                        # 알려주신 5개의 조인트 좌표
-                        pos_s1_up   = [-0.06, 2.55, 66.87, 0.07, 110.43, -0.02]
-                        pos_s2_grip = [-43.94, 20.74, 79.33, -91.58, 48.03, 5.65]
-                        pos_s3_lift = [-44.0, 22.55, 49.54, -68.26, 53.06, -30.28]
-                        pos_s4_path = [-0.3, -21.83, 91.67, -89.92, 86.81, -27.08]
-                        pos_s5_pour = [48.11, 37.12, 86.51, -57.04, 128.02, -134.6]
-                        
-                        # --- 1. 소스통 잡고 들어올리기 ---
-                        print("   >>> 1) Z축 위로 안전 이동")
-                        run_task_sync(pos_s1_up, 0)
-                        
-                        print("   >>> 2) 그립 위치로 이동 및 3비트(111) 그립!")
-                        run_task_sync(pos_s2_grip, 9, wait_time=1.0) # 🌟 Task 9 (Sauce Grip)
-                        
-                        print("   >>> 3) Z축으로 들어 올리기")
-                        run_task_sync(pos_s3_lift, 0)
-                        
-                        # --- 2. 뿌리는 위치로 이동 ---
-                        print("   >>> 4) 부으러 가는 길 이동")
-                        run_task_sync(pos_s4_path, 0)
-                        
-                        print("   >>> 5) 소스 뿌리기 시작 위치 도착")
-                        run_task_sync(pos_s5_pour, 0, wait_time=1.0)
-                        
-                        # --- 3. 소스 그리기 로직 (draw_path 유무에 따라) ---
-                        if not draw_path:
-                            # draw_path가 None이거나 비어있을 때 -> 지그재그 실행
-                            print("   >>> 6) [자동 모드] 지그재그(Zigzag) 소스 뿌리기 실행!")
-                            run_task_sync(pos_s5_pour, 8, wait_time=2.0) # Task 8 (Drizzle)
-                        else:
-                            # 🚨 나중에 커스텀 좌표 그리기 로직이 들어갈 자리
-                            print(f"   >>> 6) [커스텀 모드] {len(draw_path)}개의 좌표로 커스텀 소스 그리기 (개발 예정)")
-                            time.sleep(2.0) 
-                            
-                        # --- 4. 소스통 제자리에 반납 (역순) ---
-                        print("   >>> 7) 소스통 원위치로 반납 중...")
-                        run_task_sync(pos_s4_path, 0)
-                        run_task_sync(pos_s3_lift, 0)
-                        
-                        print("   >>> 8) 일반 릴리즈 (놓기)")
-                        run_task_sync(pos_s2_grip, 2, wait_time=1.0) # 🌟 Task 2 (기본 Release)
-                        
-                        print("   >>> 9) Z축 위로 빠져나오기")
-                        run_task_sync(pos_s1_up, 0)
+                        # 🍅 토마토 소스 15단계 좌표 (정수에 .0 추가 완료)
+                        t1  = [-9.41, -16.46, 91.71, -73.15, 82.61, -19.84]
+                        t2  = [-54.88, 0.67, 88.44, -58.15, 32.61, -20.95]
+                        t3  = [-55.48, 13.21, 78.47, -64.72, 38.03, -19.15]
+                        t4  = [-55.54, 16.62, 52.63, -45.63, 51.08, -45.5]
+                        t5  = [-82.24, 17.36, 46.76, -36.9, 45.68, -50.4]
+                        t6  = [-82.25, 17.35, 46.76, -36.9, 45.68, -50.43]
+                        t7  = [-82.27, 17.37, 46.77, -36.91, 45.69, -50.44]
+                        t8  = [-90.29, -20.06, 102.75, -21.93, 37.25, -64.53]
+                        t9  = [-80.12, 14.13, 66.48, -32.31, 61.76, -54.27]
+                        t10 = [-82.36, -6.31, 102.97, -59.17, 31.8, -213.59]
+                        t11 = [-82.24, 17.36, 46.76, -36.9, 45.68, -50.4]
+                        t12 = [-58.3, 13.6, 58.6, -37.71, 43.84, -46.24]
+                        t13 = [-59.34, 8.59, 82.0, -54.4, 30.14, -25.42]
+                        t14 = [-54.88, 0.67, 88.44, -58.15, 32.61, -20.95]
+                        t15 = [-9.41, -16.46, 91.71, -73.15, 82.61, -19.84]
 
-                        print(f"✅ '{sauce_id}' 소스 뿌리기 완벽하게 종료!\n")
+                        print("   >>> 1) 토마토 소스통 위로 접근")
+                        run_task_sync(t1, 0)
+                        run_task_sync(t2, 0)
+                        
+                        print("   >>> 2) 그립 위치 도착 및 일반 그립!")
+                        run_task_sync(t3, 1, wait_time=1.0) 
+                        
+                        print("   >>> 3) 감자튀김 중앙 상공으로 이동 중...")
+                        run_task_sync(t4, 0)
+                        run_task_sync(t5, 0)
+                        run_task_sync(t6, 0)
+                        run_task_sync(t7, 0)
+                        run_task_sync(t8, 0)
+                        run_task_sync(t9, 0)
+                        
+                        # 🌟 t10번에 도착 (그리기 시작점) - 복구 완료!
+                        run_task_sync(t10, 0, wait_time=1.0) 
+                        
+                        print("   >>> 4) 좌표에 맞춰 커스텀 그리기 시작!")
+                        if draw_path:
+                            flat_path_data = []
+                            for pt in draw_path:
+                                flat_path_data.append(float(pt['xasDouble']))
+                                flat_path_data.append(float(pt['yasDouble']))
+                            run_task_sync(flat_path_data, 8, wait_time=2.0)
+                        else:
+                            print("   👉 (draw_path 없음) 기본 지그재그 실행")
+                            run_task_sync([], 8, wait_time=2.0) 
+                        
+                        print("   >>> 5) 소스통 제자리로 복귀 중...")
+                        run_task_sync(t11, 0)
+                        run_task_sync(t12, 0)
+
+                        print("   >>> 6) 지정된 위치에 소스통 내려놓기")
+                        run_task_sync(t13, 2, wait_time=1.0) 
+                        
+                        print("   >>> 7) 안전하게 후퇴")
+                        run_task_sync(t14, 0)
+                        run_task_sync(t15, 0)
+
+                        print(f"✅ '{sauce_id}' 퍼포먼스 완벽하게 종료!\n")
                         
                     elif sauce_id == 'mustard':
-                        print(f"⚠️ '{sauce_id}' 좌표가 아직 없습니다. 패스합니다.")
-                        pass
+                        # 🌭 머스타드 소스 15단계 좌표 (정수에 .0 추가 완료)
+                        m1  = [-2.85, 5.44, 59.44, -46.58, 80.13, -0.36]
+                        m2  = [-38.83, 25.49, 55.79, -59.48, 56.98, -27.36]
+                        m3  = [-42.31, 29.05, 53.97, -58.8, 53.13, -27.68]
+                        m4  = [-42.47, 43.0, 7.61, -45.42, 73.44, -56.28]
+                        m5  = [-9.05, 7.76, 60.16, -63.9, 84.82, -20.48]
+                        m6  = [-76.71, -0.88, 42.53, -30.28, 105.75, -54.37]
+                        m7  = [-80.12, 14.13, 66.48, -32.31, 61.76, -54.27]
+                        m8  = [-82.36, -6.31, 102.97, -59.17, 31.8, -213.59]
+                        m9  = [-80.12, 14.13, 66.48, -32.31, 61.76, -54.27]
+                        m10 = [-76.71, -0.88, 42.53, -30.28, 105.75, -54.37]
+                        m11 = [-9.05, 7.76, 60.16, -63.9, 84.82, -20.48]
+                        m12 = [-42.47, 43.0, 7.61, -45.42, 73.44, -56.28]
+                        m13 = [-41.54, 27.24, 55.53, -59.04, 53.92, -27.46]
+                        m14 = [-38.83, 25.49, 55.79, -59.48, 56.98, -27.36]
+                        m15 = [-2.85, 5.44, 59.44, -46.58, 80.13, -0.36]
+
+                        print("   >>> 1) 머스타드 소스통 위로 접근")
+                        run_task_sync(m1, 0)
+                        run_task_sync(m2, 0)
+                        
+                        print("   >>> 2) 그립 위치 도착 및 일반 그립!")
+                        run_task_sync(m3, 1, wait_time=1.0) 
+                        
+                        print("   >>> 3) 감자튀김 중앙 상공으로 이동 중...")
+                        run_task_sync(m4, 0)
+                        run_task_sync(m5, 0)
+                        run_task_sync(m6, 0)
+                        run_task_sync(m7, 0)
+                        
+                        # 🌟 m8번에 도착 (그리기 시작점)
+                        run_task_sync(m8, 0, wait_time=1.0)
+                        
+                        print("   >>> 4) 좌표에 맞춰 커스텀 그리기 시작!")
+                        if draw_path:
+                            flat_path_data = []
+                            for pt in draw_path:
+                                flat_path_data.append(float(pt['xasDouble']))
+                                flat_path_data.append(float(pt['yasDouble']))
+                            run_task_sync(flat_path_data, 8, wait_time=2.0)
+                        else:
+                            print("   👉 (draw_path 없음) 기본 지그재그 실행")
+                            run_task_sync([], 8, wait_time=2.0) 
+                            
+                        print("   >>> 5) 소스통 제자리로 복귀 중...")
+                        run_task_sync(m9, 0)
+                        run_task_sync(m10, 0)
+                        run_task_sync(m11, 0)
+                        run_task_sync(m12, 0)
+                        
+                        print("   >>> 6) 지정된 위치에 소스통 내려놓기")
+                        run_task_sync(m13, 2, wait_time=1.0) 
+                        
+                        print("   >>> 7) 안전하게 후퇴")
+                        run_task_sync(m14, 0)
+                        run_task_sync(m15, 0)
+
+                        print(f"✅ '{sauce_id}' 퍼포먼스 완벽하게 종료!\n")
+                        
                     else:
                         print(f"⚠️ '{sauce_id}'은(는) 알 수 없는 소스입니다. 패스합니다.")
 
-            # ============================================================
-            # 🌟 Step 11. (플로우차트 마무리) 서빙 위치로 이동
-            # ============================================================
-            controller.publish_status("서빙 시작합니다")
-            print("\n============================================================")
-            print("Step 11. 완성된 감자칩 서빙하기")
-            print("============================================================")
+            # --------------------------------------------------------
+            # 10-C. 기본 대기 위치(Home)로 복귀 및 마무리
+            # --------------------------------------------------------
+            print("\n▶ [마무리] 다음 주문 대기 위치로 복귀")
+            # 🚨 [TODO] 다음 주문을 기다릴 가장 안전하고 멋진 대기 자세(Home) 좌표를 넣어주세요.
+            pos_home = [0.0, 0.0, 90.0, 0.0, 90.0, 0.0] 
+            run_task_sync(pos_home, 0, wait_time=1.0)
 
-            # 알려주신 서빙 궤적 5개의 조인트 좌표
-            pos_serve_1_grip = [12.6, -7.32, 120.14, 2.77, 65.15, -31.92]   # 1번: 잡기
-            pos_serve_2_wp   = [9.71, -5.27, 61.94, 3.29, 121.23, -31.84]   # 2번: 이동
-            pos_serve_3_wp   = [-65.04, -31.98, 89.65, 1.96, 111.93, -31.84]# 3번: 이동
-            pos_serve_4_wp   = [-88.83, -14.95, 91.82, -7.37, 102.0, -31.84]# 4번: 이동
-            pos_serve_5_drop = [-95.81, 17.62, 78.27, 6.38, 79.48, -31.83]  # 5번: 놓기
-
-            # 1. 1번 좌표로 이동해서 완성된 용기 꽉 잡기 (task=1)
-            # (action_server에서 task=1은 출발 전 미리 손을 열고 갑니다!)
-            print("   >>> 1) 완성된 용기 잡기 (Grip)")
-            run_task_sync(pos_serve_1_grip, 1, wait_time=1.0)
-
-            # 2. 서빙 구역을 향해 순차적으로 이동 (2, 3, 4번 / task=0)
-            print("   >>> 2) 서빙 구역으로 이동 중...")
-            run_task_sync(pos_serve_2_wp, 0)
-            run_task_sync(pos_serve_3_wp, 0)
-            run_task_sync(pos_serve_4_wp, 0)
-
-            # 3. 5번 좌표에 도착해서 용기 내려놓기 (task=2)
-            print("   >>> 3) 고객 앞 서빙 위치에 용기 내려놓기 (Drop)")
-            run_task_sync(pos_serve_5_drop, 2, wait_time=1.0)
-
-            # 4. 빈손으로 안전하게 후퇴 (내려놓은 용기를 치지 않도록 4번으로 살짝 후퇴)
-            print("   >>> 4) 서빙 완료! 빈손으로 안전하게 후퇴")
-            run_task_sync(pos_serve_4_wp, 0)
-
-            # 5. 다음 주문을 받을 기본 대기 자세로 이동 (안전한 상단 궤적인 3, 2번을 타고 복귀)
-            print("   >>> 5) 대기 위치로 복귀")
-            run_task_sync(pos_serve_3_wp, 0)
-            run_task_sync(pos_serve_2_wp, 0)
-
+            # 🌟 UI에 완료 메시지 쏘기
+            controller.publish_status("타코가 완성 되었습니다. 서빙 존에서 받아가세요! 맛있게 드세요 ^^")
+            
             print("\n🎉 모든 서빙이 완료되었습니다! (맛있게 드세요!)")
-
             print("\n🏁 한 세트 조리 완료! 다음 주문을 대기합니다.")
+            
             # 루프 끝. 다시 while문의 처음(주문 대기)으로 돌아갑니다.
 
 
