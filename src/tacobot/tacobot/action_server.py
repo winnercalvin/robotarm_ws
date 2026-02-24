@@ -121,13 +121,14 @@ def execute_callback(goal_handle):
         # ---------------------------------------------------------
         # Case A: 일반 이동 및 동작 (0:Move, 1:Grip, 2:Drop, 3:Pour, 9:SauceGrip)
         # ---------------------------------------------------------
-        if task_type in [0, 1, 2, 3, 9]: 
+        if task_type in [0, 1, 2, 3, 9, 11]: 
             v, a = 50, 50
             if task_type == 0: v, a = 30, 30   
             elif task_type == 1: v, a = 30, 20 
             elif task_type == 2: v, a = 20, 20 
             elif task_type == 3: v, a = 50, 40 
             elif task_type == 9: v, a = 30, 20 # 소스 잡으러 갈 때 속도
+            elif task_type == 11: v, a = 120, 100 # 소스 안 새게 빠르게 고속 속도
 
             # 1. Grip일 경우 출발 전 Release 먼저 수행 (일반 그립, 소스 그립 모두)
             if task_type in [1, 9]:
@@ -221,13 +222,13 @@ def execute_callback(goal_handle):
         # ---------------------------------------------------------
         elif task_type == 8:
             print("   >>> [Task 8] 소스 뿌리기 시작!", flush=True)
-            # data는 [x1, y1, x2, y2...] 형태의 리스트입니다.
             if len(data) > 0:
-                print(f"   >>> [Module] 커스텀 그리기 모듈 호출 (수신된 데이터 개수: {len(data)})", flush=True)
+                print(f"   >>> [Module] 웹소켓 커스텀 도안 그리기 (데이터 수: {len(data)})", flush=True)
                 drizzle_tools.custom_drizzle(data)
             else:
-                print("   >>> [Module] 데이터 없음 -> 기본 지그재그 그리기 호출", flush=True)
-                drizzle_tools.auto_zigzag_drizzle()
+                # 🌟 빈 배열([])이 들어왔다면 기본 로고를 그립니다.
+                print("   >>> [Module] 웹소켓 데이터 없음 -> 내장된 기본 로고 그리기 호출", flush=True)
+                drizzle_tools.draw_default_logo()
 
 
         # =========================================================
