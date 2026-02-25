@@ -5,6 +5,7 @@ from rclpy.action import ActionServer, GoalResponse
 from rclpy.node import Node
 from tacobot_interfaces.action import RobotTask
 
+
 # 로봇 설정
 ROBOT_ID = "dsr01"
 ROBOT_MODEL = "m0609"
@@ -70,7 +71,7 @@ def execute_callback(goal_handle):
     from DSR_ROBOT2 import (
         movej, wait, get_current_posj, # [필수] 현재 위치 확인 함수
         set_tool, set_tcp, get_tool, get_tcp, 
-        get_robot_mode, set_robot_mode, movesj,
+        get_robot_mode, set_robot_mode, movesj, posj,
         ROBOT_MODE_MANUAL, ROBOT_MODE_AUTONOMOUS
     )
     import tacobot.grab_tools as grab_tools
@@ -134,12 +135,14 @@ def execute_callback(goal_handle):
             elif task_type == 13: v, a = 30, 20 # Middle Grip (001)
 
             # 🌟 무언가를 잡는 동작(1, 9, 12, 13)을 하기 전에는 항상 Release 먼저 실행
-            if task_type in [1, 9, 12, 13]:
+            if task_type in [1, 9, 13]:
                 print("   >>> [Module] Grip 전 Release 안전 실행", flush=True)
                 grab_tools.release()
                 time.sleep(0.5)
             
-            if task_type == 3 and len(data) == 12:
+            if task_type == 12:
+                print("   >>> [Wait] 이동 생략! 제자리에서 그립만 꽉 쥡니다.", flush=True)
+            elif task_type == 3 and len(data) == 12:
                 wp = data[0:6]
                 target = data[6:12]
                 print("   >>> [Move] 경유지를 거쳐 논스톱(Spline) 이동 중...", flush=True)
@@ -161,9 +164,9 @@ def execute_callback(goal_handle):
             elif task_type == 3: 
                 pour_tools.pour_action(move_and_wait)
             elif task_type == 9: 
-                grab_tools.weak_grip()    # (111) 기존 sauce_grip
+                grab_tools.weak_grip()    # (110) 기존 sauce_grip
             elif task_type == 12: 
-                grab_tools.strong_grip()  # (000)
+                grab_tools.strong_grip()  # (111)
             elif task_type == 13: 
                 grab_tools.middle_grip()  # (001)
 

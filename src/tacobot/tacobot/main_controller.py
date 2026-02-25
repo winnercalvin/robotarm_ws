@@ -12,7 +12,7 @@ class TaskController(Node):
         self.cli_universal = ActionClient(self, RobotTask, '/dsr01/action_server')
 
         self.status_pub = self.create_publisher(String, '/robot_status', 10)
-        self.color_state_pub = self.create_publisher(Int32, '/dsr01/state', 10)
+        self.color_state_pub = self.create_publisher(Int32, '/dsr01/ui_state', 10)
 
         # 🌟 [수정 1] 단일 데이터 대신, 주문을 차곡차곡 쌓아둘 대기열(Queue) 리스트 생성!
         self.order_queue = []
@@ -567,7 +567,7 @@ def main(args=None):
                         # 🍅 토마토 소스
                         t1  = [-9.41, -16.46, 91.71, -73.15, 82.61, -19.84]
                         t2  = [-54.88, 0.67, 88.44, -58.15, 32.61, -20.95]
-                        t3  = [-55.48, 13.21, 78.47, -64.72, 38.03, -19.15]
+                        t3  = [-55.49, 13.22, 78.86, -65.15, 37.86, -18.6]
                         t4  = [-55.54, 16.62, 52.63, -45.63, 51.08, -45.5]
                         t5  = [-82.24, 17.36, 46.76, -36.9, 45.68, -50.4]
                         t6  = [-82.25, 17.35, 46.76, -36.9, 45.68, -50.43]
@@ -583,7 +583,7 @@ def main(args=None):
 
                         run_task_sync(t1, 0)
                         run_task_sync(t2, 0)
-                        run_task_sync(t3, 1, wait_time=1.0) 
+                        run_task_sync(t3, 13, wait_time=1.0) 
                         run_task_sync(t4, 0)
                         run_task_sync(t5, 0)
                         run_task_sync(t6, 0)
@@ -591,7 +591,9 @@ def main(args=None):
                         run_task_sync(t8, 0)
                         run_task_sync(t9, 0)
                         run_task_sync(t10, 11, wait_time=0.1) 
-                        
+
+                        print("   >>> [Grip] 소스 짜기(Task 12) 모드로 그랩 변경!")
+                        run_task_sync(t10, 12, wait_time=0.5)
                         print("   >>> 좌표에 맞춰 그리기 시작!")
                         if draw_path: # draw_path 데이터가 있을 때
                             flat_path_data = []
@@ -630,12 +632,15 @@ def main(args=None):
 
                         run_task_sync(m1, 0)
                         run_task_sync(m2, 0)
-                        run_task_sync(m3, 1, wait_time=1.0) 
+                        run_task_sync(m3, 13, wait_time=1.0) 
                         run_task_sync(m4, 0)
                         run_task_sync(m5, 0)
                         run_task_sync(m6, 0)
                         run_task_sync(m7, 0)
                         run_task_sync(m8, 11, wait_time=0.1)
+
+                        print("   >>> [Grip] 머스타드 짜기(Task 12) 모드로 그랩 변경!")
+                        run_task_sync(m8, 12, wait_time=0.5)
                         
                         print("   >>> 좌표에 맞춰 그리기 시작!")
                         if draw_path: # draw_path 데이터가 있을 때

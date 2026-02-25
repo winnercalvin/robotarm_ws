@@ -29,19 +29,19 @@ def grip():
 
 # 🌟 1. 약한 그립 (Task 9 - 기존 sauce_grip 대체)
 def weak_grip():
-    print(">>> [Module] Weak Grip (1 1 1)...")
-    set_gripper_signal(ON, ON, ON)
+    print(">>> [Module] Weak Grip (1 1 0)...")
+    set_gripper_signal(ON, ON, OFF)
     wait(1.5)
     print(">>> [Module] Weak Grip 완료")
 
-# 🌟 2. 강한 그립 (Task 12)
+# 🌟 2. 강한 그립 (Task 12) 갓경만식 짜기 51mm
 def strong_grip():
-    print(">>> [Module] Strong Grip (0 0 0)...")
-    set_gripper_signal(OFF, OFF, OFF)
+    print(">>> [Module] Strong Grip (1 1 1)...")
+    set_gripper_signal(ON, ON, ON)
     wait(1.5)
     print(">>> [Module] Strong Grip 완료")
 
-# 🌟 3. 중간 그립 (Task 13)
+# 🌟 3. 중간 그립 (Task 13) 갓경만식 잡기 55mm
 def middle_grip():
     print(">>> [Module] Middle Grip (0 0 1)...")
     set_gripper_signal(OFF, OFF, ON)

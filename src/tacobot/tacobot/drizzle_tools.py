@@ -118,7 +118,7 @@ def custom_drizzle(flat_data):
     
     MIN_DISTANCE = 5.0    
     DRAWING_SIZE = 91.0   
-    Z_PRESS_DEPTH = 50.0  
+    # Z_PRESS_DEPTH = 50.0  
     VELOCITY = 60
     ACC = 80
     
@@ -153,10 +153,9 @@ def custom_drizzle(flat_data):
 
         if i == 0:
             movel(posx([tx, ty, bz, ba, bb, bc]), vel=VELOCITY, acc=ACC, ref=DR_BASE)
-            movel(posx([tx, ty, bz - Z_PRESS_DEPTH, ba, bb, bc]), vel=VELOCITY/2, acc=ACC, ref=DR_BASE)
             wait(0.2)
         else:
-            target_pos = posx([tx, ty, bz - Z_PRESS_DEPTH, ba, bb, bc])
+            target_pos = posx([tx, ty, bz, ba, bb, bc])
             if i < len(filtered_path) - 1:
                 movel(target_pos, vel=VELOCITY, acc=ACC, radius=15.0, ref=DR_BASE)   # default radius=2.0
             else:
@@ -168,7 +167,7 @@ def custom_drizzle(flat_data):
     last_ty = by - (last_pt['y'] * DRAWING_SIZE)
     
     # 다 그리고 위로 살짝 들기 (이후 고속 턴을 위해 sleep은 아주 짧게!)
-    movel(posx([last_tx, last_ty, bz + 50, ba, bb, bc]), vel=VELOCITY, acc=ACC, ref=DR_BASE)
+    # movel(posx([last_tx, last_ty, bz + 50, ba, bb, bc]), vel=VELOCITY, acc=ACC, ref=DR_BASE)
     time.sleep(0.1) 
 
 def draw_default_logo():
