@@ -1,4 +1,4 @@
-# tacobot/drizzle_tools.py
+# tacobot/drizzle_tools_blend_radius.py
 import math
 import time
 
@@ -142,6 +142,10 @@ def custom_drizzle(flat_data):
         print(f"   >>> ❌ [Error] 현재 위치를 읽을 수 없습니다: {e}", flush=True)
         return
 
+    #########################################################################
+    # radius=15.0 : blend radius (연속 궤적 반경) -> radius 값 클수록 소스 이동 반경 smooth화
+    # 2.0은 너무 적으므로 10<= radius <= 20 내 반경이 적절함
+    #########################################################################
     # 경로 따라 그리기
     for i, pt in enumerate(filtered_path):
         tx = bx + (pt['x'] * DRAWING_SIZE)
@@ -154,7 +158,7 @@ def custom_drizzle(flat_data):
         else:
             target_pos = posx([tx, ty, bz - Z_PRESS_DEPTH, ba, bb, bc])
             if i < len(filtered_path) - 1:
-                movel(target_pos, vel=VELOCITY, acc=ACC, radius=2.0, ref=DR_BASE)
+                movel(target_pos, vel=VELOCITY, acc=ACC, radius=15.0, ref=DR_BASE)   # default radius=2.0
             else:
                 movel(target_pos, vel=VELOCITY, acc=ACC, ref=DR_BASE)
 

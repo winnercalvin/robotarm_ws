@@ -119,57 +119,53 @@ def execute_callback(goal_handle):
         goal_handle.publish_feedback(RobotTask.Feedback(status=f"Processing..."))
 
         # ---------------------------------------------------------
-        # Case A: 일반 이동 및 동작 (0:Move, 1:Grip, 2:Drop, 3:Pour, 9:SauceGrip)
+        # Case A: 일반 이동 및 동작
         # ---------------------------------------------------------
-        if task_type in [0, 1, 2, 3, 9, 11]: 
+        # 🌟 리스트에 12(Strong), 13(Middle) 추가
+        if task_type in [0, 1, 2, 3, 9, 11, 12, 13]: 
             v, a = 50, 50
             if task_type == 0: v, a = 30, 30   
             elif task_type == 1: v, a = 30, 20 
             elif task_type == 2: v, a = 20, 20 
             elif task_type == 3: v, a = 50, 40 
-            elif task_type == 9: v, a = 30, 20 # 소스 잡으러 갈 때 속도
-            elif task_type == 11: v, a = 120, 100 # 소스 안 새게 빠르게 고속 속도
+            elif task_type == 9: v, a = 30, 20  # Weak Grip (111)
+            elif task_type == 11: v, a = 120, 100
+            elif task_type == 12: v, a = 30, 20 # Strong Grip (000)
+            elif task_type == 13: v, a = 30, 20 # Middle Grip (001)
 
-            # 1. Grip일 경우 출발 전 Release 먼저 수행 (일반 그립, 소스 그립 모두)
-            if task_type in [1, 9]:
-                print("   >>> [Module] Release 실행", flush=True)
+            # 🌟 무언가를 잡는 동작(1, 9, 12, 13)을 하기 전에는 항상 Release 먼저 실행
+            if task_type in [1, 9, 12, 13]:
+                print("   >>> [Module] Grip 전 Release 안전 실행", flush=True)
                 grab_tools.release()
                 time.sleep(0.5)
             
-            # 2. 이동 로직 분리 (블렌딩 vs 일반)
             if task_type == 3 and len(data) == 12:
-                # 🌟 [핵심 수정 1] movesj를 위해 posj 형변환 객체를 임포트합니다.
-                from DSR_ROBOT2 import posj 
-                
                 wp = data[0:6]
                 target = data[6:12]
                 print("   >>> [Move] 경유지를 거쳐 논스톱(Spline) 이동 중...", flush=True)
-                
-                # 🌟 [핵심 수정 2] 단순 리스트가 아닌 posj()로 감싸서 넘겨주어야 에러가 안 납니다!
                 movesj([posj(wp), posj(target)], vel=v, acc=a)
-                wait_for_arrival(target) # 도착 대기
+                wait_for_arrival(target)
             else:
-                # 그 외(데이터 6개)의 경우 기존처럼 일반 이동 수행
                 print("   >>> [Wait] 로봇 일반 이동 완료 대기...", flush=True)
                 move_and_wait(data, v, a)
                 print("   >>> [Wait] 이동 완료 확인됨!", flush=True)
 
-            # 3. 도착 후 동작 수행
-            if task_type == 0:
+            # 🌟 도착 후 각 Task 번호에 맞는 함수 실행
+            if task_type == 0: 
                 print("   >>> [Module] 단순 이동(경유지) 완료", flush=True)
-            elif task_type == 1:   
-                print("   >>> [Module] Grip 실행", flush=True)
+            elif task_type == 1: 
                 grab_tools.grip() 
             elif task_type == 2:
-                print("   >>> [Module] 도착 후 Release(놓기) 실행", flush=True)
                 grab_tools.release()
                 time.sleep(0.5)
             elif task_type == 3: 
-                print("   >>> [Module] Pour(최적화 붓기) 실행", flush=True)
                 pour_tools.pour_action(move_and_wait)
-            elif task_type == 9:
-                print("   >>> [Module] Sauce Grip(111) 실행", flush=True)
-                grab_tools.sauce_grip()
+            elif task_type == 9: 
+                grab_tools.weak_grip()    # (111) 기존 sauce_grip
+            elif task_type == 12: 
+                grab_tools.strong_grip()  # (000)
+            elif task_type == 13: 
+                grab_tools.middle_grip()  # (001)
 
         # ---------------------------------------------------------
         # Case C-1: 쉐이크 동작 (Task 4) - Z축 위아래

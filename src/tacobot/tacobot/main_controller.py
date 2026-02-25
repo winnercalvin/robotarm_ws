@@ -3,7 +3,7 @@ import time
 from rclpy.node import Node
 from rclpy.action import ActionClient
 from tacobot_interfaces.action import RobotTask
-from std_msgs.msg import String
+from std_msgs.msg import String, Bool, Float64MultiArray, Int32
 import json
 
 class TaskController(Node):
@@ -12,9 +12,12 @@ class TaskController(Node):
         self.cli_universal = ActionClient(self, RobotTask, '/dsr01/action_server')
 
         self.status_pub = self.create_publisher(String, '/robot_status', 10)
+        self.color_state_pub = self.create_publisher(Int32, '/dsr01/state', 10)
 
         # 🌟 [수정 1] 단일 데이터 대신, 주문을 차곡차곡 쌓아둘 대기열(Queue) 리스트 생성!
         self.order_queue = []
+        self.is_paused = False  # 정지 상태 플래그
+        self.jog_joints = None  # 조그 명령 저장 변수
 
         self.subscription = self.create_subscription(
             String,
@@ -22,7 +25,27 @@ class TaskController(Node):
             self.order_callback,
             10
         )
+
+        # 2. 정지 명령 구독 (/dsr01/stop)
+        self.stop_sub = self.create_subscription(
+            Bool,
+            '/dsr01/stop',
+            self.stop_callback,
+            10)
+        
+        # 3. 조그 명령 구독 (/dsr01/jog_command)
+        self.jog_sub = self.create_subscription(
+            Float64MultiArray,
+            '/dsr01/jog_command',
+            self.jog_callback,
+            10)
+
         self.get_logger().info("🎧 '/taco_order' 토픽 구독 시작. 주문 대기 중...")
+
+    def send_color_state(self, state_num):
+        msg = Int32()
+        msg.data = state_num
+        self.color_state_pub.publish(msg)    
 
     def publish_status(self, text):
         msg = String()
@@ -64,11 +87,31 @@ class TaskController(Node):
     def feedback_callback(self, feedback_msg):
         pass
 
+    def stop_callback(self, msg):
+        """정지 신호를 받으면 is_paused 상태를 업데이트"""
+        self.is_paused = msg.data
+        if self.is_paused:
+            self.get_logger().warn("🛑 [STOP] 정지 신호 수신! 조그 모드로 전환합니다.")
+            self.publish_status("정지 신호 수신 - 조그 이동 가능 상태")
+            self.send_color_state(6)
+        else:
+            self.get_logger().info("▶️ [RESUME] 정지 해제! 작업을 재개합니다.")
+            self.publish_status("작업 재개")
+            self.send_color_state(2)
+
+    def jog_callback(self, msg):
+        """조그 조인트 값을 수신하여 저장 (6개 값 확인)"""
+        if len(msg.data) == 6:
+            self.jog_joints = list(msg.data)
+
 def main(args=None):
     rclpy.init(args=args)
     controller = TaskController()
 
     def run_task_sync(target_pos, t_type, wait_time=0.5):
+        # 1. 작업을 시작하기 전 정지 상태라면 대기 (조그 모드 활성화)
+        check_pause_and_jog()
+
         future = controller.send_task(target_pos, task_type=t_type)
         if future is None: return False
         
@@ -79,8 +122,37 @@ def main(args=None):
             res_future = goal_handle.get_result_async()
             rclpy.spin_until_future_complete(controller, res_future)
             time.sleep(wait_time) 
+
+            # 2. 작업이 끝난 직후 정지 상태라면 대기 (조그 모드 활성화)
+            check_pause_and_jog()
+
             return True
         return False
+    
+    def check_pause_and_jog():
+        """정지 상태일 때 조그 명령을 받아 로봇을 움직이는 핵심 루프"""
+        first_entry = True
+        while controller.is_paused and rclpy.ok():
+            if first_entry:
+                print("⏸️ 일시정지 중... 조그 명령(/dsr01/jog_command) 대기 중")
+                first_entry = False
+            
+            # 조그 명령(좌표)이 들어왔다면 movej(task_type 0) 실행
+            if controller.jog_joints is not None:
+                print(f"🕹️ 조그 이동 수행: {controller.jog_joints}")
+                jog_future = controller.send_task(controller.jog_joints, task_type=0)
+                if jog_future:
+                    rclpy.spin_until_future_complete(controller, jog_future)
+                    j_handle = jog_future.result()
+                    if j_handle.accepted:
+                        j_res = j_handle.get_result_async()
+                        rclpy.spin_until_future_complete(controller, j_res)
+                
+                # 명령 수행 후 초기화 (중복 실행 방지)
+                controller.jog_joints = None
+
+            # 토픽 수신을 위해 스핀
+            rclpy.spin_once(controller, timeout_sec=0.1)
 
     try:
         # 🚨 [핵심] rclpy가 살아있는 동안 계속 반복 (무한 루프)
@@ -93,8 +165,11 @@ def main(args=None):
             # 🌟 [수정 3] 대기열(queue)이 비어있으면 계속 기다림
             if len(controller.order_queue) == 0:
                 controller.publish_status("주문을 대기하고 있습니다.")
+                controller.send_color_state(1)
                 while rclpy.ok() and len(controller.order_queue) == 0:
                     rclpy.spin_once(controller, timeout_sec=0.1)
+
+            controller.send_color_state(2)
             
             # 대기열에 주문이 생겼다! 가장 앞에 있는(오래된) 0번 주문서를 뽑아냄!
             current_order_data = controller.order_queue.pop(0)
