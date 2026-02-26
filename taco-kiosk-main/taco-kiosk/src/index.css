@@ -1,0 +1,14 @@
+/* 모든 태그의 여백을 없애고, 크기 계산을 테두리 포함으로 통일 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 화면 전체를 꽉 채우기 위한 설정 */
+html,
+body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden; /* 불필요한 스크롤바 없애기 */
+}
