@@ -1,5 +1,5 @@
 # 🌮 [타코 자동화 조리 로봇팔]
-> **조 이름:** [F-2 - ROKEY]
+> **조 이름:** [F-2조 - 하이 타코]
 > **팀원:** [박승호_손경만_김세훈_이주학_문형철]
 
 ## 1. 🎨 시스템 설계 및 플로우 차트
@@ -17,26 +17,33 @@ graph TD
 
     %% 조리 단계
     GrabContainer --> PourPotato[감자를 튀김 트레이에 붓기]
-    PourPotato --> ShakeTray[튀김 트레이 흔들기: 고르게 튀기기]
+    
+    %% 감자 두 배 확인 루프 추가
+    PourPotato --> CheckDouble{감자 두 배 옵션인가?}
+    CheckDouble -- "예 (추가 투입 필요)" --> GrabContainer
+    CheckDouble -- "아니오 / 투입 완료" --> ShakeTray[튀김 트레이 흔들기: 고르게 튀기기]
     
     %% 조리 후 처리
     ShakeTray --> DrainOil[튀김 트레이를 잡고 기름 털기]
     DrainOil --> PourToContainer[감자칩을 다시 용기에 붓기]
 
-    %% 추가 재료 확인 루프
+    %% 추가 재료 확인 루프 (텍스트 수정됨)
     PourToContainer --> CheckExtra{추가 선택 재료가 있는가?}
-    CheckExtra -- "예" --> GrabExtra[해당 재료 통을 잡고 용기에 붓기]
+    CheckExtra -- "예" --> GrabExtra[선택한 재료의 스쿠퍼를 잡고 토핑을 추가한다]
     GrabExtra --> CheckExtra
-    CheckExtra -- "아니오" --> DrizzleSource[소스 뿌리기: 양 조절 및 패턴 구현]
+    
+    %% 서빙 후 소스 뿌리기
+    CheckExtra -- "아니오" --> Serving[용기를 잡아서 서빙 위치로 이동]
 
     %% 마무리
-    DrizzleSource --> Serving[용기를 잡아서 서빙 위치로 이동]
-    Serving --> End([작업 완료])
+    Serving --> DrizzleSource[소스 뿌리기: 양 조절 및 패턴 구현]
+    DrizzleSource --> End([작업 완료])
 
-    %% 요청하신 스타일링 적용
+    %% 스타일링 적용
     style DrainOil fill:#fff4dd,stroke:#d4a017,stroke-width:2px
     style DrizzleSource fill:#fff4dd,stroke:#d4a017,stroke-width:2px
     style CheckExtra fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    style CheckDouble fill:#e1f5fe,stroke:#01579b,stroke-width:2px
     
     %% 기본 스타일링
     style Start fill:#f9f,stroke:#333,stroke-width:2px
@@ -72,8 +79,7 @@ graph TD
 | :--- | :--- | :--- |
 | **OS** | Ubuntu LTS (Jammy Jellyfish) | 22.04 |
 | **Robot Lang** | Python | 3.10.12 |
-| **Backend Lang**| Java | `[버전 입력, 예: 17]` |
-| **Frontend Lang**| Node.js | `[버전 입력, 예: v18.17.0]` |
+| **Backend Lang**| Java | 17 |
 
 ### 🤖 Robot Control (ROS 2)
 | Package / Library | Description | Version |
@@ -87,18 +93,16 @@ graph TD
 ### ⚙️ Backend & Database
 | Framework / Tool | Description | Version |
 | :--- | :--- | :--- |
-| **Spring Boot** | REST API & SSE 통신 서버 | `[버전 입력]` |
-| **Spring Data JPA**| 데이터베이스 ORM | `[버전 입력]` |
-| **MariaDB** | RDBMS (주문 궤적 및 상태 저장) | `[버전 입력]` |
+| **Spring Boot** | REST API & SSE 통신 서버 | 3.5.10 |
+| **MariaDB** | RDBMS (주문 궤적 및 상태 저장) | 10.11.16 |
 
 ### 🎨 Frontend
 | Framework / Tool | Description | Version |
 | :--- | :--- | :--- |
-| **React** | 사용자 동적 UI/UX 구성 | `[버전 입력]` |
-| **Three.js** | 3D 웹 렌더링 엔진 | `[버전 입력]` |
-| **react-three-fiber**| React용 3D 렌더링 라이브러리 | `[버전 입력]` |
-| **roslibjs** | 브라우저 ↔ ROS 2 웹소켓 통신 | `[버전 입력]` |
+| **React** | 사용자 동적 UI/UX 구성 | 18.3.1 |
+| **react-three-fiber**| React용 3D 렌더링 라이브러리 | 8.18.0 |
 | **Web Speech API** | 자동 음성 안내 (TTS) 지원 | Browser Native |
+
 ---
 
 ## 5. ▶️ 실행 순서 (Usage Guide)
@@ -114,4 +118,16 @@ ros2 launch tacobot tacobot_system.launch.py
 로스브릿지와 웹소켓을 켜고 키오스크 주문을 받을 준비를 합니다.
 ```bash
 ros2 launch rosbridge_server rosbridge_websocket_launch.xml
+```
+
+### Step 3. 백엔드(Back-end) 서버 실행
+터미널을 새로 열고, 스프링 부트 백엔드 서버를 실행합니다.
+```bash
+java -jar taco_kiosk.jar
+```
+
+### Step 4. 프론트엔드(Front-end) 앱 실행
+키오스크 화면 및 웹 UI를 띄우기 위해 아래 명령어를 실행합니다.
+```bash
+npm run dev -- --host
 ```
