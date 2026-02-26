@@ -64,9 +64,6 @@ graph TD
 ---
 
 ## 4. 📦 의존성 (Dependencies)
-프로젝트 실행에 필요한 라이브러리 및 패키지입니다.
-
-## 📦 의존성 (Dependencies)
 본 프로젝트는 시스템의 각 계층별로 최적화된 프레임워크와 라이브러리를 사용합니다.
 
 ### 🖥️ Core Environment & OS
