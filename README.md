@@ -66,8 +66,41 @@ graph TD
 ## 4. 📦 의존성 (Dependencies)
 프로젝트 실행에 필요한 라이브러리 및 패키지입니다.
 
-* **[추후 작성 예정]**
+## 📦 의존성 (Dependencies)
+본 프로젝트는 시스템의 각 계층별로 최적화된 프레임워크와 라이브러리를 사용합니다.
 
+### 🖥️ Core Environment & OS
+| Category | Technology / Language | Version |
+| :--- | :--- | :--- |
+| **OS** | Ubuntu LTS (Jammy Jellyfish) | 22.04 |
+| **Robot Lang** | Python | 3.10.12 |
+| **Backend Lang**| Java | `[버전 입력, 예: 17]` |
+| **Frontend Lang**| Node.js | `[버전 입력, 예: v18.17.0]` |
+
+### 🤖 Robot Control (ROS 2)
+| Package / Library | Description | Version |
+| :--- | :--- | :--- |
+| **ROS 2** | ROS 2 Core Environment | Humble Hawksbill |
+| **rclpy** | ROS 2 Python Client Library | Standard (Humble) |
+| **rosbridge-suite** | WebSocket 통신을 위한 ROS 2 Bridge | Standard (Humble) |
+| **DSR_ROBOT2** | Doosan Robotics 공식 제어 API | - |
+| **dsr_msgs2** | Doosan 로봇 커스텀 메시지/서비스 | - |
+
+### ⚙️ Backend & Database
+| Framework / Tool | Description | Version |
+| :--- | :--- | :--- |
+| **Spring Boot** | REST API & SSE 통신 서버 | `[버전 입력]` |
+| **Spring Data JPA**| 데이터베이스 ORM | `[버전 입력]` |
+| **MariaDB** | RDBMS (주문 궤적 및 상태 저장) | `[버전 입력]` |
+
+### 🎨 Frontend
+| Framework / Tool | Description | Version |
+| :--- | :--- | :--- |
+| **React** | 사용자 동적 UI/UX 구성 | `[버전 입력]` |
+| **Three.js** | 3D 웹 렌더링 엔진 | `[버전 입력]` |
+| **react-three-fiber**| React용 3D 렌더링 라이브러리 | `[버전 입력]` |
+| **roslibjs** | 브라우저 ↔ ROS 2 웹소켓 통신 | `[버전 입력]` |
+| **Web Speech API** | 자동 음성 안내 (TTS) 지원 | Browser Native |
 ---
 
 ## 5. ▶️ 실행 순서 (Usage Guide)
