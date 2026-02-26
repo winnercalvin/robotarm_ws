@@ -130,7 +130,7 @@ def execute_callback(goal_handle):
             elif task_type == 2: v, a = 20, 20 
             elif task_type == 3: v, a = 50, 40 
             elif task_type == 9: v, a = 30, 20  # Weak Grip (111)
-            elif task_type == 11: v, a = 120, 100
+            elif task_type == 11: v, a = 60, 60
             elif task_type == 12: v, a = 30, 20 # Strong Grip (000)
             elif task_type == 13: v, a = 30, 20 # Middle Grip (001)
 
