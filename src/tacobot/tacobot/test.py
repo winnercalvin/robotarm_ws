@@ -79,9 +79,12 @@ def perform_task(filtered_path):
     
     Z_PRESS_DEPTH = 50.0
 
-    # 0. 안전한 시작 위치(Home)로 이동
+    # 0. 안전한 시작 위치로 이동
     print("Moving to Home...")
-    movej([0, 0, 90, 0, 90, 0], vel=VELOCITY, acc=ACC)
+    # movej([0, 0, 90, 0, 90, 0], vel=VELOCITY, acc=ACC)
+    movej([-82.36, -6.31, 102.97, -59.17, 31.8, -213.59], vel=VELOCITY, acc=ACC)
+    # posj(-82.36, -6.31, 102.97, -59.17, 31.8, -213.59)
+    # posx(-75.61, -634.5, 409.36, 68.17, -111.54, -99.99)
     wait(0)
     
     # 1. 반환값 ([x,y,z,a,b,c], status) 처리
@@ -144,7 +147,6 @@ def perform_task(filtered_path):
     movel(posx([last_x, last_y, bz + 50, ba, bb, bc]), vel=VELOCITY, acc=ACC)
     print("Drawing Task Finished.")
     
-
 def main(args=None):
     """메인 함수: ROS2 노드 초기화 및 동작 수행"""
     rclpy.init(args=args)

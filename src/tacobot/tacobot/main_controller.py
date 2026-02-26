@@ -154,6 +154,10 @@ def main(args=None):
             # 토픽 수신을 위해 스핀
             rclpy.spin_once(controller, timeout_sec=0.1)
 
+    cabbage_scoop_count = 0
+    tomato_scoop_count = 0
+    onion_scoop_count = 0
+
     try:
         # 🚨 [핵심] rclpy가 살아있는 동안 계속 반복 (무한 루프)
         while rclpy.ok():
@@ -407,6 +411,24 @@ def main(args=None):
                                 431.89, -333.89, 192.02, 111.37, -170.33, 115.49,
                                 431.89, -195.27, 196.06, 111.36, -170.32, 115.48
                             ]
+
+                            # 횟수를 1 증가시킵니다.
+                            cabbage_scoop_count += 1
+                            print(f"       (현재 양배추 퍼기 횟수: {cabbage_scoop_count}회차)")
+
+                            # 횟수에 따라 5번째 줄의 Y(인덱스 25), Z(인덱스 26) 값을 바꿉니다!
+                            if cabbage_scoop_count == 2:
+                                # 2회차: Y좌표에서 1.5를 뺌
+                                cabbage_scoop_data[25] -= 1.5
+                                print("       -> [보정] 2회차 적용: Y축 -1.5 보정")
+                            
+                            elif cabbage_scoop_count >= 3:
+                                # 3회차 이상: Y좌표 -1.5 (2회차 유지) + Z좌표 -0.8
+                                cabbage_scoop_data[25] -= 1.5
+                                cabbage_scoop_data[26] -= 0.8
+                                print("       -> [보정] 3회차 이상 적용: Y축 -1.5, Z축 -0.8 보정")
+
+                            # 보정된 데이터로 동작 실행!
                             run_task_sync(cabbage_scoop_data, 6, wait_time=1.0)
                             
                             print("   >>> [3/4] 감자칩 용기에 커스텀 붓기 (5단계 + 흔들기)")
@@ -450,6 +472,16 @@ def main(args=None):
                                 355.28, -152.38, 186.83, 111.35, -170.32, 115.47,
                                 355.28, -20.28, 182.1, 111.35, -170.32, 115.47
                             ]
+                            tomato_scoop_count += 1
+                            print(f"       (현재 토마토 퍼기 횟수: {tomato_scoop_count}회차)")
+                            if tomato_scoop_count == 2:
+                                tomato_scoop_data[25] -= 1.5 # Y
+                                print("       -> [보정] Y축 -1.5 적용")
+                            elif tomato_scoop_count >= 3:
+                                tomato_scoop_data[25] -= 1.5 # Y
+                                tomato_scoop_data[26] -= 0.8 # Z
+                                print("       -> [보정] Y축 -1.5, Z축 -0.8 적용")
+
                             run_task_sync(tomato_scoop_data, 6, wait_time=1.0)
                             
                             print("   >>> [3/4] 감자칩 용기에 커스텀 붓기 (5단계 + 흔들기)")
@@ -493,6 +525,16 @@ def main(args=None):
                                 281.57, -321.11, 191.61, 111.37, -170.33, 115.48,
                                 281.56, -199.76, 191.63, 111.38, -170.33, 115.48
                             ]
+                            onion_scoop_count += 1
+                            print(f"       (현재 양파 퍼기 횟수: {onion_scoop_count}회차)")
+                            if onion_scoop_count == 2:
+                                onion_scoop_data[25] -= 1.5 # Y
+                                print("       -> [보정] Y축 -1.5 적용")
+                            elif onion_scoop_count >= 3:
+                                onion_scoop_data[25] -= 1.5 # Y
+                                onion_scoop_data[26] -= 0.8 # Z
+                                print("       -> [보정] Y축 -1.5, Z축 -0.8 적용")
+
                             run_task_sync(onion_scoop_data, 6, wait_time=1.0)
                             
                             print("   >>> [3/4] 감자칩 용기에 커스텀 붓기 (5단계 + 흔들기)")
@@ -528,7 +570,7 @@ def main(args=None):
                 pos_serve_2_wp   = [9.71, -5.27, 61.94, 3.29, 121.23, -31.84]   
                 pos_serve_3_wp   = [-65.04, -31.98, 89.65, 1.96, 111.93, -31.84]
                 pos_serve_4_wp   = [-88.83, -14.95, 91.82, -7.37, 102.0, -31.84]
-                pos_serve_5_drop = [-95.53, 21.63, 72.16, 2.1, 82.41, -20.47]  
+                pos_serve_5_drop = [-95.3, 25.08, 67.19, 2.1, 83.93, -20.17]  
 
                 print("   >>> 1) 완성된 용기 잡기 (Grip)")
                 run_task_sync(pos_serve_1_grip, 1, wait_time=1.0)
@@ -671,7 +713,7 @@ def main(args=None):
                 run_task_sync(pos_home, 0, wait_time=1.0)
 
             # ============================================================
-            # 🌟 [for문 종료] 장바구니에 담긴 모든 요리가 끝났을 때 1번만 실행!
+            # 장바구니에 담긴 모든 요리가 끝났을 때 1번만 실행!
             # ============================================================
             controller.publish_status("타코가 완성 되었습니다. 서빙 존에서 받아가세요! 맛있게 드세요 ^^")
             

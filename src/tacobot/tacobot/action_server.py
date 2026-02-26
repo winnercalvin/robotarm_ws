@@ -58,7 +58,7 @@ def initialize_robot():
 
 # 1. 현관문 (Goal Callback)
 def goal_callback(goal_request):
-    print(f"\n🔔 [CCTV-1] 현관문 도착! Task {goal_request.task_type} 요청 수락.", flush=True)
+    print(f"\nTask {goal_request.task_type} 요청 수락.", flush=True)
     return GoalResponse.ACCEPT
 
 

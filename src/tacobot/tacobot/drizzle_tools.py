@@ -157,7 +157,7 @@ def custom_drizzle(flat_data):
         else:
             target_pos = posx([tx, ty, bz, ba, bb, bc])
             if i < len(filtered_path) - 1:
-                movel(target_pos, vel=VELOCITY, acc=ACC, radius=15.0, ref=DR_BASE)   # default radius=2.0
+                movel(target_pos, vel=VELOCITY, acc=ACC, ref=DR_BASE)   # default radius=2.0
             else:
                 movel(target_pos, vel=VELOCITY, acc=ACC, ref=DR_BASE)
 
