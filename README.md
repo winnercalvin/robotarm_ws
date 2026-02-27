@@ -12,7 +12,7 @@
 ```mermaid
 graph TD
     %% 시작 및 주문 단계
-    Start([시작]) --> Kiosk[키오스크 주문: 재료 선택 및 소스 설정]
+    Start([시작]) --> Kiosk[키오스크 주문]
     Kiosk --> GrabContainer[소분된 용기 잡기]
 
     %% 조리 단계
@@ -21,22 +21,22 @@ graph TD
     %% 감자 두 배 확인 루프 추가
     PourPotato --> CheckDouble{감자 두 배 옵션인가?}
     CheckDouble -- "예 (추가 투입 필요)" --> GrabContainer
-    CheckDouble -- "아니오 / 투입 완료" --> ShakeTray[튀김 트레이 흔들기: 고르게 튀기기]
+    CheckDouble -- "아니오 / 투입 완료" --> ShakeTray[튀김 트레이 흔들기]
     
     %% 조리 후 처리
     ShakeTray --> DrainOil[튀김 트레이를 잡고 기름 털기]
     DrainOil --> PourToContainer[감자칩을 다시 용기에 붓기]
 
     %% 추가 재료 확인 루프 (텍스트 수정됨)
-    PourToContainer --> CheckExtra{추가 선택 재료가 있는가?}
-    CheckExtra -- "예" --> GrabExtra[선택한 재료의 스쿠퍼를 잡고 토핑을 추가한다]
+    PourToContainer --> CheckExtra{추가 선택 토핑이 있는가?}
+    CheckExtra -- "예" --> GrabExtra[선택한 토핑을 스쿱하여 추가]
     GrabExtra --> CheckExtra
     
     %% 서빙 후 소스 뿌리기
-    CheckExtra -- "아니오" --> Serving[용기를 잡아서 서빙 위치로 이동]
+    CheckExtra -- "아니오" --> Serving[용기를 서빙 위치로 이동]
 
     %% 마무리
-    Serving --> DrizzleSource[소스 뿌리기: 양 조절 및 패턴 구현]
+    Serving --> DrizzleSource[소스 뿌리기]
     DrizzleSource --> End([작업 완료])
 
     %% 스타일링 적용
@@ -50,12 +50,12 @@ graph TD
     style End fill:#f9f,stroke:#333,stroke-width:2px
     
     %% 링크 설정
-    click Kiosk "[https://www.notion.so/30cffad12169807e805afd087d8435c3?source=copy_link](https://www.notion.so/30cffad12169807e805afd087d8435c3?source=copy_link)" "kiosk"
-    click GrabContainer "[https://www.notion.so/30dffad12169800ba40df3456e3fa4e8?source=copy_link](https://www.notion.so/30dffad12169800ba40df3456e3fa4e8?source=copy_link)"
-    click PourPotato "[https://www.notion.so/311ffad121698087a3a7c8a90ac922f3?source=copy_link](https://www.notion.so/311ffad121698087a3a7c8a90ac922f3?source=copy_link)"
-    click ShakeTray "[https://www.notion.so/311ffad1216980b19bfdcab6b99ec816?source=copy_link](https://www.notion.so/311ffad1216980b19bfdcab6b99ec816?source=copy_link)" "shake"
-    click DrainOil "[https://www.notion.so/30cffad1216980b3aad8c5f9b16c4f7b?source=copy_link](https://www.notion.so/30cffad1216980b3aad8c5f9b16c4f7b?source=copy_link)" "drainoil"
-    click DrizzleSource "[https://www.notion.so/30dffad121698026a843cc4f6843f982?source=copy_link](https://www.notion.so/30dffad121698026a843cc4f6843f982?source=copy_link)" "source"
+    click Kiosk "https://www.notion.so/30cffad12169807e805afd087d8435c3?source=copy_link" "kiosk"
+    click GrabContainer "https://www.notion.so/30dffad12169800ba40df3456e3fa4e8?source=copy_link"
+    click PourPotato "https://www.notion.so/311ffad121698087a3a7c8a90ac922f3?source=copy_link"
+    click ShakeTray "https://www.notion.so/311ffad1216980b19bfdcab6b99ec816?source=copy_link" "shake"
+    click DrainOil "https://www.notion.so/30cffad1216980b3aad8c5f9b16c4f7b?source=copy_link" "drainoil"
+    click DrizzleSource "https://www.notion.so/30dffad121698026a843cc4f6843f982?source=copy_link" "source"
 ```
 
 ## 3. 🛠️ 사용 장비 목록 (Hardware List)
